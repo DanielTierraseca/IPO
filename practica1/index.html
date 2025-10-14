@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ElectroInformatic — Comprar · Reparar · Reseñas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">!e¡</div>
+      <div>
+        <div style="font-weight:800">ElectroInformatic</div>
+        <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-target="home">Inicio</button>
+      <button class="nav-btn" data-target="comprar">Comprar</button>
+      <button class="nav-btn" data-target="reparar">Reparar</button>
+      <button class="nav-btn" data-target="mis-compras">Mis Compras</button>
+      <button class="nav-btn" id="cart-btn">Carrito (0)</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="active">
+      <div class="hero">
+        <div class="hero-card">
+          <h1>Bienvenid@ a ElectroInformatic</h1>
+          <p class="lead">Compra, repara y comparte tu experiencia con tus dispositivos electrónicos favoritos.</p>
+          <div class="cta">
+            <button class="btn" data-target="comprar">Ir a Comprar</button>
+            <button class="small-btn" data-target="reparar" style="margin-left:8px">Reservar reparación</button>
+          </div>
+        </div>
+        <div style="width:320px">
+          <div class="card" style="padding:18px">
+            <h3 style="margin:0">¿Necesitas ayuda?</h3>
+            <p class="muted" style="margin-top:10px">Consulta guías, consejos o solicita una reparación en la pestaña <strong>Reparar</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reseñas animadas -->
+      <div id="resenas-movimiento">
+        <h2>Reseñas de clientes</h2>
+        <div class="resenas-slider">
+          <div class="card">📱 “El X-Phone me sorprendió, excelente batería.”<br>⭐⭐⭐⭐⭐</div>
+          <div class="card">💻 “SpeedBook va genial para clase y trabajo.”<br>⭐⭐⭐⭐</div>
+          <div class="card">🎧 “SoundMax tiene un sonido brutal.”<br>⭐⭐⭐⭐⭐</div>
+          <div class="card">⌚ “FitTime es cómodo y mide bien el pulso.”<br>⭐⭐⭐⭐</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="comprar">
+      <h2>Comprar</h2>
+      <p class="muted">Selecciona un producto para ver detalles y añadir al carrito.</p>
+      <div id="product-list" class="grid"></div>
+      <div id="product-detail"></div>
+    </section>
+
+    <section id="reparar">
+      <h2>Reparar</h2>
+      <div class="card form-card">
+        <form onsubmit="event.preventDefault(); alert('Solicitud enviada (demo).')">
+          <input placeholder="Nombre" required>
+          <input placeholder="Dispositivo (ej. móvil, portátil)" required>
+          <textarea placeholder="Descripción del fallo" rows="4"></textarea>
+          <div class="form-buttons">
+            <button class="btn" type="submit">Enviar solicitud</button>
+            <button class="small-btn" type="button" onclick="alert('Demo: llama al 900-XXX-XXX')">Llamar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="mis-compras">
+      <h2>Mis Compras</h2>
+      <p class="muted">Aquí verás tus pedidos completados. Puedes añadir una reseña.</p>
+      <div id="purchase-list" class="card cart-list"></div>
+    </section>
+
+    <section id="carrito">
+      <h2>Carrito</h2>
+      <div id="cart-contents" class="card cart-list">Tu carrito está vacío.</div>
+    </section>
+
+    <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
