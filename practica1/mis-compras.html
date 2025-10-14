@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ElectroInformatic — Mis Compras</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">!e¡</div>
+      <div>
+        <div style="font-weight:800">ElectroInformatic</div>
+        <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
+      </div>
+    </div>
+    <nav>
+      <a href="index.html" class="nav-btn">Inicio</a>
+      <a href="comprar.html" class="nav-btn">Comprar</a>
+      <a href="reparar.html" class="nav-btn">Reparar</a>
+      <a href="mis-compras.html" class="nav-btn active">Mis Compras</a>
+      <a href="carrito.html" class="nav-btn" id="cart-btn">Carrito (0)</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Mis Compras</h2>
+    <p class="muted">Aquí verás tus pedidos completados. Puedes añadir una reseña.</p>
+    <div id="purchase-list" class="card cart-list"></div>
+
+    <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

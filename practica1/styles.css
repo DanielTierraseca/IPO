@@ -85,3 +85,103 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 1
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
 }
+/* Estilos para enlaces de navegación */
+nav a {
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-block;
+}
+
+nav a.active {
+  color: white;
+  background: rgba(255,255,255,0.05);
+}
+
+/* Estilos para enlaces botón */
+.cta a {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn, .small-btn {
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn {
+  background: linear-gradient(90deg,var(--accent),#38bdf8);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  color: inherit;
+}
+
+.small-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* Estilos para el modal de reseñas */
+#review-modal .card {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Estilos para items de compra */
+.purchase-item {
+  transition: all 0.3s ease;
+}
+
+.purchase-item:hover {
+  border-color: rgba(255,255,255,0.2) !important;
+  transform: translateY(-2px);
+}
+
+/* Mejora para estrellas de rating */
+#rating-stars span {
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+#rating-stars span:hover {
+  transform: scale(1.2);
+}
+
+/* Mejora para textarea */
+#review-text {
+  transition: all 0.3s ease;
+  resize: vertical;
+  min-height: 100px;
+}
+
+#review-text:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.2);
+}
