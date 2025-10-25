@@ -1,8 +1,20 @@
 const PRODUCTS = [
-  {id:1, name:'X-Phone Pro', price:329, desc:'Teléfono con buena cámara y batería duradera.'},
-  {id:2, name:'SpeedBook 14"', price:649, desc:'Portátil ligero para trabajo y estudio.'},
-  {id:3, name:'Auriculares SoundMax', price:79, desc:'Sonido envolvente y cancelación de ruido.'},
-  {id:4, name:'Smartwatch FitTime', price:119, desc:'Monitoriza salud y notificaciones.'}
+  {id:1, name:'Pccom revolt i7 3050', price:529, desc:'Portatil gaming de buen rendimiento.',image:'https://thumb.pccomponentes.com/w-530-530/articles/1091/10916702/1154-pccom-revolt-5060-intel-core-i7-14650hx-32gb-1tb-ssd-rtx-5060-16-comprar.jpg'},
+  {id:2, name:'SpeedBook 14"', price:649, desc:'Portátil ligero para trabajo y estudio.',image:'https://i.blogs.es/d44d83/hp-slatebook-14-1/450_1000.jpg'},
+  {id:3, name:'Auriculares SoundMax', price:79, desc:'Sonido envolvente y cancelación de ruido.',image:'https://m.media-amazon.com/images/I/51xTiE941pL._UF1000,1000_QL80_.jpg'},
+  {id:4, name:'Smartwatch FitTime', price:119, desc:'Monitoriza salud y notificaciones.',image:'https://m.media-amazon.com/images/I/61zAWem6QjL.jpg'},
+  {id:5, name:'Monitor UltraView 27"', price:219, desc:'Pantalla Full HD con colores vibrantes y marco delgado.',image:'https://www.digitaltigers.com/images/product/gallery/uvquad27-wid1260.jpg'},
+  {id:6, name:'Teclado Mecánico ProKey', price:89, desc:'Retroiluminado RGB y switches de alta durabilidad.',image:'https://img.pccomponentes.com/articles/1086/10861649/2309-edifier-g4k-teclado-mecanico-inalambrico-gaming-negro-comprar.jpg'},
+  {id:7, name:'Ratón Óptico SwiftClick', price:49, desc:'Precisión extrema y diseño ergonómico para largas sesiones.',image:'https://www.ngs.eu/images/productos/M/Raton_optico_USB_NGS_silver_Tick_02.jpg'},
+  {id:8, name:'Disco SSD FastDrive 1TB', price:129, desc:'Velocidad de lectura y escritura ultrarrápida.',image:'https://media.adeo.com/mkp/f2107145a9df74f5e1738f160ce9542e/media.jpeg'},
+  {id:9, name:'Tarjeta Gráfica PowerX 4060', price:449, desc:'Rendimiento ideal para gaming y edición de video.',image:'https://dcdn-us.mitiendanube.com/stores/004/850/241/products/tarjeta-grafica-pny-nvidia-geforce-rtx-4060-front-c57f7fe915e8129e7a17286807838281-1024-1024.png'},
+  {id:10, name:'Impresora JetPrint 3000', price:159, desc:'Impresión rápida con conectividad WiFi y Bluetooth.',image:'https://m.media-amazon.com/images/I/61Zl8Cf3PDL._AC_UF894,1000_QL80_.jpg'},
+  {id:11, name:'Router WiFi TurboNet AX6000', price:189, desc:'Cobertura amplia y soporte para WiFi 6.',image:'https://m.media-amazon.com/images/I/6109HWXqgXL._AC_UF350,350_QL80_.jpg'},
+  {id:12, name:'Cámara Web ClearView HD', price:69, desc:'Resolución 1080p ideal para videollamadas y streaming.',image:'https://informaticaeducativa.es/wp-content/uploads/2020/07/webcam-informaticaeducativa.es_.png'},
+  {id:13, name:'Altavoces BassBoom 2.1', price:99, desc:'Potente sonido con graves profundos y diseño moderno.',image:'https://m.media-amazon.com/images/I/81ETcqAfWIL._AC_UF894,1000_QL80_.jpg'},
+  {id:14, name:'Memoria RAM HyperSpeed 16GB', price:75, desc:'Rendimiento superior para multitarea y gaming.',image:'https://m.media-amazon.com/images/I/61aDeyMWIsL._UF894,1000_QL80_.jpg'},
+  {id:15, name:'Tablet TabX 10"', price:259, desc:'Pantalla grande y batería de larga duración para entretenimiento.',image:'https://image.made-in-china.com/202f0j00JKUhSjlFrgGr/Mega-Tab-X-Tablet-PC-for-Student-Learing-10-1-Inch-Android-Tablet-PC-for-Education.webp'}
+
 ];
 
 // Cargar carrito y compras desde localStorage
@@ -53,10 +65,12 @@ function renderProducts() {
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
-      <div class="thumb">${p.name.split(' ')[0]}</div>
+      <div class="thumb">
+        <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
+      </div>
       <div class="product-title">${p.name}</div>
       <div class="muted">${p.desc}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="price">€${p.price}</div>
         <div style="display:flex;gap:8px">
           <button class="small-btn" onclick="showDetail(${p.id})">Ver</button>
@@ -74,11 +88,13 @@ function showDetail(id) {
   if (!detail) return;
 
   detail.innerHTML = `
-    <div class="card detail">
-      <div style="min-width:220px">
-        <div class="thumb" style="height:200px">${p.name.split(' ')[0]}</div>
+    <div class="card detail" style="display:flex; gap: 20px; align-items: flex-start;">
+      <div style="flex: 0 0 220px;">
+        <div class="thumb">
+          <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
+        </div>
       </div>
-      <div class="info">
+      <div class="info" style="flex: 1;">
         <h3>${p.name}</h3>
         <p class="muted">${p.desc}</p>
         <div class="price">€${p.price}</div>
@@ -156,6 +172,10 @@ function checkout() {
   purchases.push(...cart.map(i => ({...i})));
   savePurchases();
 
+  // Verificar que se guardó en localStorage
+  const verify = JSON.parse(localStorage.getItem('purchases'));
+  console.log('Verificación de localStorage (purchases):', verify);
+
   alert('¡Compra completada! Gracias por tu compra.');
   cart = [];
   saveCart();
@@ -169,9 +189,15 @@ function checkout() {
 
 // Mis compras
 // Mis compras
+// Mis compras
 function renderPurchases() {
   const list = document.getElementById('purchase-list');
   if (!list) return;
+
+  // Recargar purchases desde localStorage por si acaso
+  purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+
+  console.log('Compras encontradas:', purchases); // Para depurar
 
   if (purchases.length === 0) {
     list.innerHTML = 'Aún no has comprado nada.';
@@ -183,16 +209,23 @@ function renderPurchases() {
     return `
     <div class="purchase-item" style="margin-bottom:20px; padding:16px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; background:var(--glass);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div>
-          <strong style="font-size:16px;">${p.name}</strong>
-          <div class="muted">€${p.price} × ${p.qty} | Total: €${p.price * p.qty}</div>
-          ${hasReview ? `
-            <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">
-              <div><strong>Tu reseña:</strong> ${p.review.rating}⭐</div>
-              <div class="muted">"${p.review.text}"</div>
-              <small class="muted">${p.review.date || 'Sin fecha'}</small>
+        <div style="display:flex; gap: 12px; align-items: flex-start;">
+          ${p.image ? `
+            <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+              <img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">
             </div>
           ` : ''}
+          <div>
+            <strong style="font-size:16px;">${p.name}</strong>
+            <div class="muted">€${p.price} × ${p.qty} | Total: €${p.price * p.qty}</div>
+            ${hasReview ? `
+              <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                <div><strong>Tu reseña:</strong> ${p.review.rating}⭐</div>
+                <div class="muted">"${p.review.text}"</div>
+                <small class="muted">${p.review.date || 'Sin fecha'}</small>
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div>
           ${!hasReview ?
@@ -337,8 +370,11 @@ function closeReviewForm() {
 }
 
 // Cerrar modal con ESC
-document.addEventListener('keydown', function(e) {
+document.addEventListener('DOMContentLoaded', function(e) {
   if (e.key === 'Escape') {
+    if (document.getElementById('purchase-list')) {
+    renderPurchases();
+  }
     closeReviewForm();
   }
 });
