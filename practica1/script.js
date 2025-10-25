@@ -386,3 +386,137 @@ function clearCart() {
   updateCartUI();
   alert('Carrito limpiado');
 }
+// Función para obtener todas las reseñas (por defecto + usuario)
+function getAllReviews() {
+  // Reseñas por defecto
+  const defaultReviews = [
+    {text: '"El X-Phone me sorprendió, excelente batería."', rating: 5, emoji: '📱'},
+    {text: '"SpeedBook va genial para clase y trabajo."', rating: 4, emoji: '💻'},
+    {text: '"SoundMax tiene un sonido brutal."', rating: 5, emoji: '🎧'},
+    {text: '"FitTime es cómodo y mide bien el pulso."', rating: 4, emoji: '⌚'}
+  ];
+
+  // Reseñas del usuario desde localStorage
+  const userReviews = [];
+  const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+
+  purchases.forEach(purchase => {
+    if (purchase.review && purchase.review.text) {
+      userReviews.push({
+        text: purchase.review.text,
+        rating: purchase.review.rating,
+        emoji: '⭐', // Emoji genérico para reseñas de usuario
+        product: purchase.name
+      });
+    }
+  });
+
+  // Combinar y mezclar reseñas
+  let allReviews = [...defaultReviews];
+
+  // Agregar reseñas de usuario (máximo 6 para no saturar)
+  userReviews.slice(0, 6).forEach(review => {
+    allReviews.push(review);
+  });
+
+  // Mezclar el array para variedad
+  return shuffleArray(allReviews);
+}
+
+// Función para mezclar un array (algoritmo Fisher-Yates)
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
+// Función para renderizar el slider de reseñas
+function renderReviewsSlider() {
+  const sliderContainer = document.querySelector('.resenas-slider');
+  if (!sliderContainer) return;
+
+  const reviews = getAllReviews();
+
+  // Crear HTML para las reseñas
+  let reviewsHTML = '';
+  reviews.forEach(review => {
+    const stars = '⭐'.repeat(review.rating);
+    reviewsHTML += `
+      <div class="card">
+        ${review.emoji} ${review.text}<br>${stars}
+        ${review.product ? `<div style="font-size:12px; margin-top:4px; color:var(--muted)">- ${review.product}</div>` : ''}
+      </div>
+    `;
+  });
+
+  // Duplicar las reseñas para crear un bucle infinito suave
+  sliderContainer.innerHTML = reviewsHTML + reviewsHTML;
+}
+
+// Actualizar el DOMContentLoaded para incluir el slider
+document.addEventListener('DOMContentLoaded', function() {
+  // Código existente...
+  if (document.getElementById('product-list')) {
+    renderProducts();
+  }
+  if (document.getElementById('cart-contents')) {
+    updateCartUI();
+  }
+  if (document.getElementById('purchase-list')) {
+    renderPurchases();
+  }
+
+  // Actualizar contador del carrito en todas las páginas
+  updateCartCounter();
+
+  // Renderizar slider de reseñas si existe
+  if (document.querySelector('.resenas-slider')) {
+    renderReviewsSlider();
+  }
+});
+
+// Función para actualizar el slider cuando se añade una nueva reseña
+function updateReviewsSlider() {
+  if (document.querySelector('.resenas-slider')) {
+    renderReviewsSlider();
+  }
+}
+
+// Modificar la función submitReview para actualizar el slider
+function submitReview(purchaseIndex) {
+  const reviewText = document.getElementById('review-text').value.trim();
+
+  if (currentRating === 0) {
+    alert('Por favor, selecciona una calificación con estrellas');
+    return;
+  }
+
+  if (!reviewText) {
+    alert('Por favor, escribe tu reseña');
+    return;
+  }
+
+  // Guardar la reseña
+  if (!purchases[purchaseIndex].review) {
+    purchases[purchaseIndex].review = {};
+  }
+
+  purchases[purchaseIndex].review = {
+    rating: currentRating,
+    text: reviewText,
+    date: new Date().toLocaleDateString('es-ES')
+  };
+
+  savePurchases();
+  closeReviewForm();
+  renderPurchases();
+
+  // ACTUALIZAR EL SLIDER DE RESEÑAS
+  updateReviewsSlider();
+
+  // Mostrar confirmación
+  alert('¡Gracias por tu reseña! ✨ Ahora aparecerá en nuestra página principal.');
+}

@@ -271,3 +271,59 @@ nav a.active {
 .grid .card > div:last-child {
   margin-top: auto; /* Empuja los botones hacia abajo */
 }
+
+/* Reseñas animadas - BUCLE INFINITO CORRECTO */
+#resenas-movimiento {
+  text-align: center;
+  margin-top: 50px;
+  overflow: hidden;
+  position: relative;
+}
+
+.resenas-slider {
+  display: flex;
+  gap: 60px;
+  animation: mover 30s linear infinite;
+  width: max-content;
+}
+
+.resenas-slider:hover {
+  animation-play-state: paused;
+}
+
+.resenas-slider .card {
+  min-width: 280px;
+  text-align: center;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+/* Animación mejorada para bucle infinito */
+@keyframes mover {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-280px * 4 - 60px * 3)); /* Ancho de 4 cards + gaps */
+  }
+}
+
+/* Para pantallas más pequeñas */
+@media (max-width: 768px) {
+  .resenas-slider {
+    gap: 30px;
+  }
+
+  .resenas-slider .card {
+    min-width: 250px;
+  }
+
+  @keyframes mover {
+    100% {
+      transform: translateX(calc(-250px * 4 - 30px * 3));
+    }
+  }
+}
