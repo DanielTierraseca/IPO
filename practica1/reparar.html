@@ -27,11 +27,12 @@
 
   <main>
     <h2>Reparar</h2>
+
     <div class="card form-card">
-      <form onsubmit="event.preventDefault(); alert('Solicitud enviada (demo).')">
-        <input placeholder="Nombre" required>
-        <input placeholder="Dispositivo (ej. móvil, portátil)" required>
-        <textarea placeholder="Descripción del fallo" rows="4"></textarea>
+      <form id="repair-form">
+        <input id="repair-name" placeholder="Nombre" required>
+        <input id="repair-device" placeholder="Dispositivo (ej. móvil, portátil)" required>
+        <textarea id="repair-desc" placeholder="Descripción del fallo" rows="4" required></textarea>
         <div class="form-buttons">
           <button class="btn" type="submit">Enviar solicitud</button>
           <button class="small-btn" type="button" onclick="alert('Demo: llama al 900-XXX-XXX')">Llamar</button>
@@ -39,9 +40,74 @@
       </form>
     </div>
 
+    <h3 style="margin-top:30px;">Solicitudes enviadas</h3>
+    <div id="repair-list" class="card" style="padding:16px;">
+      <p class="muted">Aún no hay solicitudes.</p>
+    </div>
+
     <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
   </main>
 
   <script src="script.js"></script>
+  <script>
+    // --- Gestión de reparaciones ---
+    let repairs = JSON.parse(localStorage.getItem('repairs')) || [];
+
+    const form = document.getElementById('repair-form');
+    const list = document.getElementById('repair-list');
+
+    function saveRepairs() {
+      localStorage.setItem('repairs', JSON.stringify(repairs));
+    }
+
+    function renderRepairs() {
+      if (repairs.length === 0) {
+        list.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
+        return;
+      }
+
+      list.innerHTML = repairs.map((r, index) => `
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0;">
+          <strong>${r.name}</strong> — <em>${r.device}</em><br>
+          <div class="muted" style="margin:4px 0;">"${r.desc}"</div>
+          <small class="muted">🕒 ${r.date}</small>
+        </div>
+      `).join('');
+    }
+
+    // Mostrar solicitudes al cargar la página
+    document.addEventListener('DOMContentLoaded', renderRepairs);
+
+    // Enviar formulario
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('repair-name').value.trim();
+      const device = document.getElementById('repair-device').value.trim();
+      const desc = document.getElementById('repair-desc').value.trim();
+
+      if (!name || !device || !desc) {
+        alert('Por favor completa todos los campos.');
+        return;
+      }
+
+      const repair = {
+        name,
+        device,
+        desc,
+        date: new Date().toLocaleString('es-ES')
+      };
+
+      // Guardar
+      repairs.push(repair);
+      saveRepairs();
+      renderRepairs();
+
+      // Limpiar formulario
+      form.reset();
+
+      alert('✅ Solicitud enviada correctamente');
+    });
+  </script>
 </body>
 </html>
