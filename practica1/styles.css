@@ -327,3 +327,94 @@ nav a.active {
     }
   }
 }
+
+/* ============================================= */
+/* ESTILOS PARA SISTEMA DE REPARACIONES */
+/* ============================================= */
+
+.repair-list {
+  margin-top: 20px;
+}
+
+.repair-item {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.repair-item:hover {
+  border-color: rgba(255,255,255,0.1) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Animación para el modal de edición */
+#edit-repair-modal .card {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  animation: modalAppear 0.3s ease-out;
+}
+
+#edit-repair-status {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 6px;
+  color: white;
+  font-family: inherit;
+}
+
+#edit-repair-status option {
+  background: var(--card);
+  color: white;
+}
+
+/* Efectos hover para botones de reparación */
+.repair-item .small-btn {
+  transition: all 0.2s ease;
+}
+
+.repair-item .small-btn:hover {
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.05);
+}
+
+/* Responsive para reparaciones */
+@media (max-width: 768px) {
+  .repair-item {
+    padding: 12px !important;
+  }
+
+  .repair-item > div:first-child {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .repair-item .small-btn {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+}
+/* Estilos para el campo de búsqueda */
+#search-input {
+  transition: all 0.3s ease;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.2);
+}
+
+#search-input::placeholder {
+  color: var(--muted);
+}

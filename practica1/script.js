@@ -14,7 +14,6 @@ const PRODUCTS = [
   {id:13, name:'Altavoces BassBoom 2.1', price:99, desc:'Potente sonido con graves profundos y diseño moderno.',image:'https://m.media-amazon.com/images/I/81ETcqAfWIL._AC_UF894,1000_QL80_.jpg'},
   {id:14, name:'Memoria RAM HyperSpeed 16GB', price:75, desc:'Rendimiento superior para multitarea y gaming.',image:'https://m.media-amazon.com/images/I/61aDeyMWIsL._UF894,1000_QL80_.jpg'},
   {id:15, name:'Tablet TabX 10"', price:259, desc:'Pantalla grande y batería de larga duración para entretenimiento.',image:'https://image.made-in-china.com/202f0j00JKUhSjlFrgGr/Mega-Tab-X-Tablet-PC-for-Student-Learing-10-1-Inch-Android-Tablet-PC-for-Education.webp'}
-
 ];
 
 // Cargar carrito y compras desde localStorage
@@ -30,11 +29,80 @@ function savePurchases() {
   localStorage.setItem('purchases', JSON.stringify(purchases));
 }
 
+// =============================================
+// FUNCIONALIDAD DE BÚSQUEDA
+// =============================================
+
+// Función para buscar productos
+function searchProducts() {
+  const searchInput = document.getElementById('search-input');
+  const searchTerm = searchInput.value.toLowerCase().trim();
+
+  if (!searchTerm) {
+    renderProducts(); // Mostrar todos si no hay búsqueda
+    return;
+  }
+
+  const filteredProducts = PRODUCTS.filter(product =>
+    product.name.toLowerCase().includes(searchTerm) ||
+    product.desc.toLowerCase().includes(searchTerm)
+  );
+
+  renderFilteredProducts(filteredProducts);
+}
+
+// Función para renderizar productos filtrados
+function renderFilteredProducts(filteredProducts) {
+  const list = document.getElementById('product-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  if (filteredProducts.length === 0) {
+    list.innerHTML = '<div class="card" style="text-align: center; padding: 40px; grid-column: 1 / -1;">No se encontraron productos que coincidan con tu búsqueda.</div>';
+    return;
+  }
+
+  filteredProducts.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="thumb">
+        <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
+      </div>
+      <div class="product-title">${p.name}</div>
+      <div class="muted">${p.desc}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="price">€${p.price}</div>
+        <div style="display:flex;gap:8px">
+          <button class="small-btn" onclick="showDetail(${p.id})">Ver</button>
+          <button class="small-btn" onclick="addToCart(${p.id})">Comprar</button>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// =============================================
+// FUNCIONALIDADES PRINCIPALES
+// =============================================
+
 // Inicialización cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
   // Solo ejecutar funciones si los elementos existen en la página actual
   if (document.getElementById('product-list')) {
     renderProducts();
+
+    // Inicializar búsqueda
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', searchProducts);
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          searchProducts();
+        }
+      });
+    }
   }
   if (document.getElementById('cart-contents')) {
     updateCartUI();
@@ -43,8 +111,18 @@ document.addEventListener('DOMContentLoaded', function() {
     renderPurchases();
   }
 
+  // Inicializar página de reparación si existe
+  if (document.querySelector('#repair-form form')) {
+    initRepairPage();
+  }
+
   // Actualizar contador del carrito en todas las páginas
   updateCartCounter();
+
+  // Renderizar slider de reseñas si existe
+  if (document.querySelector('.resenas-slider')) {
+    renderReviewsSlider();
+  }
 });
 
 function updateCartCounter() {
@@ -187,8 +265,6 @@ function checkout() {
   }, 1000);
 }
 
-// Mis compras
-// Mis compras
 // Mis compras
 function renderPurchases() {
   const list = document.getElementById('purchase-list');
@@ -344,8 +420,11 @@ function submitReview(purchaseIndex) {
   closeReviewForm();
   renderPurchases();
 
+  // ACTUALIZAR EL SLIDER DE RESEÑAS
+  updateReviewsSlider();
+
   // Mostrar confirmación
-  alert('¡Gracias por tu reseña! ✨');
+  alert('¡Gracias por tu reseña! ✨ Ahora aparecerá en nuestra página principal.');
 }
 
 function editReview(purchaseIndex) {
@@ -370,12 +449,10 @@ function closeReviewForm() {
 }
 
 // Cerrar modal con ESC
-document.addEventListener('DOMContentLoaded', function(e) {
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    if (document.getElementById('purchase-list')) {
-    renderPurchases();
-  }
     closeReviewForm();
+    closeEditRepairModal();
   }
 });
 
@@ -386,6 +463,11 @@ function clearCart() {
   updateCartUI();
   alert('Carrito limpiado');
 }
+
+// =============================================
+// SISTEMA DE RESEÑAS EN INICIO
+// =============================================
+
 // Función para obtener todas las reseñas (por defecto + usuario)
 function getAllReviews() {
   // Reseñas por defecto
@@ -456,28 +538,6 @@ function renderReviewsSlider() {
   sliderContainer.innerHTML = reviewsHTML + reviewsHTML;
 }
 
-// Actualizar el DOMContentLoaded para incluir el slider
-document.addEventListener('DOMContentLoaded', function() {
-  // Código existente...
-  if (document.getElementById('product-list')) {
-    renderProducts();
-  }
-  if (document.getElementById('cart-contents')) {
-    updateCartUI();
-  }
-  if (document.getElementById('purchase-list')) {
-    renderPurchases();
-  }
-
-  // Actualizar contador del carrito en todas las páginas
-  updateCartCounter();
-
-  // Renderizar slider de reseñas si existe
-  if (document.querySelector('.resenas-slider')) {
-    renderReviewsSlider();
-  }
-});
-
 // Función para actualizar el slider cuando se añade una nueva reseña
 function updateReviewsSlider() {
   if (document.querySelector('.resenas-slider')) {
@@ -485,38 +545,206 @@ function updateReviewsSlider() {
   }
 }
 
-// Modificar la función submitReview para actualizar el slider
-function submitReview(purchaseIndex) {
-  const reviewText = document.getElementById('review-text').value.trim();
+// =============================================
+// SISTEMA DE REPARACIONES
+// =============================================
 
-  if (currentRating === 0) {
-    alert('Por favor, selecciona una calificación con estrellas');
-    return;
-  }
+// Cargar reparaciones desde localStorage
+let repairRequests = JSON.parse(localStorage.getItem('repairRequests')) || [];
 
-  if (!reviewText) {
-    alert('Por favor, escribe tu reseña');
-    return;
-  }
+// Guardar reparaciones en localStorage
+function saveRepairRequests() {
+  localStorage.setItem('repairRequests', JSON.stringify(repairRequests));
+}
 
-  // Guardar la reseña
-  if (!purchases[purchaseIndex].review) {
-    purchases[purchaseIndex].review = {};
-  }
+// Función para manejar el envío del formulario de reparación
+function handleRepairSubmit(event) {
+  event.preventDefault();
 
-  purchases[purchaseIndex].review = {
-    rating: currentRating,
-    text: reviewText,
-    date: new Date().toLocaleDateString('es-ES')
+  const form = event.target;
+  const name = form.querySelector('input[placeholder="Nombre"]').value;
+  const device = form.querySelector('input[placeholder="Dispositivo"]').value;
+  const description = form.querySelector('textarea').value;
+
+  const repairRequest = {
+    id: Date.now(), // ID único basado en timestamp
+    name: name,
+    device: device,
+    description: description,
+    date: new Date().toLocaleDateString('es-ES'),
+    status: 'Pendiente' // Estado inicial
   };
 
-  savePurchases();
-  closeReviewForm();
-  renderPurchases();
+  repairRequests.push(repairRequest);
+  saveRepairRequests();
+  renderRepairRequests();
 
-  // ACTUALIZAR EL SLIDER DE RESEÑAS
-  updateReviewsSlider();
+  // Mostrar confirmación y limpiar formulario
+  alert('✅ Solicitud de reparación enviada correctamente');
+  form.reset();
+}
 
-  // Mostrar confirmación
-  alert('¡Gracias por tu reseña! ✨ Ahora aparecerá en nuestra página principal.');
+// Función para renderizar las solicitudes de reparación
+function renderRepairRequests() {
+  const container = document.getElementById('repair-requests-container');
+  if (!container) return;
+
+  if (repairRequests.length === 0) {
+    container.innerHTML = '<p class="muted" style="text-align: center; padding: 20px;">No hay solicitudes de reparación.</p>';
+    return;
+  }
+
+  container.innerHTML = repairRequests.map((repair, index) => `
+    <div class="repair-item card" style="margin-bottom: 15px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: var(--glass);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div style="flex: 1;">
+          <strong style="font-size: 16px;">${repair.device}</strong>
+          <div class="muted" style="font-size: 14px; margin-top: 4px;">Solicitado por: ${repair.name}</div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <span class="status-badge" style="background: ${getStatusColor(repair.status)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+              ${repair.status}
+            </span>
+            <span class="muted" style="font-size: 12px;">${repair.date}</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px; flex-shrink: 0;">
+          <button class="small-btn" onclick="editRepairRequest(${repair.id})" style="font-size: 12px;">✏️ Editar</button>
+          <button class="small-btn" onclick="deleteRepairRequest(${repair.id})" style="font-size: 12px;">🗑️ Eliminar</button>
+        </div>
+      </div>
+      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
+        <strong style="font-size: 14px; color: var(--muted);">Descripción del problema:</strong>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.4;">${repair.description}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Función para obtener color según el estado
+function getStatusColor(status) {
+  const colors = {
+    'Pendiente': '#f59e0b',
+    'En proceso': '#3b82f6',
+    'Completado': '#10b981',
+    'Cancelado': '#ef4444'
+  };
+  return colors[status] || '#6b7280';
+}
+
+// Función para eliminar una solicitud de reparación
+function deleteRepairRequest(id) {
+  if (confirm('¿Estás seguro de que quieres eliminar esta solicitud de reparación?')) {
+    repairRequests = repairRequests.filter(repair => repair.id !== id);
+    saveRepairRequests();
+    renderRepairRequests();
+  }
+}
+
+// Función para editar una solicitud de reparación
+function editRepairRequest(id) {
+  const repair = repairRequests.find(r => r.id === id);
+  if (!repair) return;
+
+  // Crear modal de edición
+  const editModal = `
+    <div id="edit-repair-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;">
+      <div class="card" style="max-width:500px; width:90%; margin:20px;">
+        <h3>Editar Solicitud de Reparación</h3>
+
+        <form id="edit-repair-form" style="display: flex; flex-direction: column; gap: 12px;">
+          <input
+            type="text"
+            placeholder="Nombre"
+            value="${repair.name}"
+            required
+            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
+          >
+          <input
+            type="text"
+            placeholder="Dispositivo"
+            value="${repair.device}"
+            required
+            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
+          >
+          <textarea
+            placeholder="Descripción del fallo"
+            rows="4"
+            required
+            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; resize: vertical;"
+          >${repair.description}</textarea>
+
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label style="color: var(--muted); font-size: 14px;">Estado:</label>
+            <select id="edit-repair-status" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px; color: white;">
+              <option value="Pendiente" ${repair.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+              <option value="En proceso" ${repair.status === 'En proceso' ? 'selected' : ''}>En proceso</option>
+              <option value="Completado" ${repair.status === 'Completado' ? 'selected' : ''}>Completado</option>
+              <option value="Cancelado" ${repair.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 16px;">
+            <button type="button" class="small-btn" onclick="closeEditRepairModal()">Cancelar</button>
+            <button type="submit" class="btn">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  // Remover modal existente si hay uno
+  const existingModal = document.getElementById('edit-repair-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  document.body.insertAdjacentHTML('beforeend', editModal);
+
+  // Configurar el evento del formulario de edición
+  document.getElementById('edit-repair-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    updateRepairRequest(id);
+  });
+}
+
+// Función para actualizar una solicitud de reparación
+function updateRepairRequest(id) {
+  const form = document.getElementById('edit-repair-form');
+  const name = form.querySelector('input[placeholder="Nombre"]').value;
+  const device = form.querySelector('input[placeholder="Dispositivo"]').value;
+  const description = form.querySelector('textarea').value;
+  const status = document.getElementById('edit-repair-status').value;
+
+  const repairIndex = repairRequests.findIndex(r => r.id === id);
+  if (repairIndex !== -1) {
+    repairRequests[repairIndex] = {
+      ...repairRequests[repairIndex],
+      name: name,
+      device: device,
+      description: description,
+      status: status
+    };
+
+    saveRepairRequests();
+    renderRepairRequests();
+    closeEditRepairModal();
+    alert('✅ Solicitud de reparación actualizada correctamente');
+  }
+}
+
+// Función para cerrar el modal de edición
+function closeEditRepairModal() {
+  const modal = document.getElementById('edit-repair-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Inicialización de la página de reparación
+function initRepairPage() {
+  const repairForm = document.querySelector('#repair-form form');
+  if (repairForm) {
+    repairForm.addEventListener('submit', handleRepairSubmit);
+  }
+  renderRepairRequests();
 }
