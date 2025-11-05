@@ -896,56 +896,226 @@ nav a.active {
 }
 
 /* ============================================= */
-/* ESTILOS PARA MODAL DE INICIO DE SESIÓN */
+/* ESTILOS MEJORADOS PARA MODAL DE INICIO DE SESIÓN */
 /* ============================================= */
 
 #login-modal .modal-content {
-  max-width: 400px;
+  max-width: 480px; /* Aumentado de 400px a 480px */
+  margin: 5% auto; /* Centrado mejorado */
+}
+
+#login-modal .modal-content h2 {
+  text-align: center;
+  margin-bottom: 25px; /* Más espacio debajo del título */
+  font-size: 28px; /* Título más grande */
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent), #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 #login-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px; /* Aumentado de 12px a 20px para más espacio entre campos */
 }
 
 #login-form input {
   width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent;
+  padding: 16px; /* Aumentado de 12px a 16px */
+  border-radius: 12px; /* Bordes más redondeados */
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
   color: white;
   box-sizing: border-box;
   font-family: 'Inter', sans-serif;
+  font-size: 16px; /* Texto más grande */
+  transition: all 0.3s ease;
 }
 
 #login-form input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 231, 183, 0.2);
+  transform: translateY(-2px);
 }
 
 #login-form input::placeholder {
   color: var(--muted);
+  font-size: 14px;
 }
 
-#login-sidebar-link {
-  background: rgba(110, 231, 183, 0.1);
-  color: var(--accent);
-}
-
-#login-sidebar-link:hover {
-  background: rgba(110, 231, 183, 0.2);
+#login-form input:hover {
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
 }
 
 .form-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px; /* Aumentado de 8px a 12px */
   justify-content: space-between;
-  margin-top: 16px;
+  margin-top: 25px; /* Más espacio arriba de los botones */
 }
 
 .form-buttons .btn,
 .form-buttons .small-btn {
   flex: 1;
+  padding: 14px 20px; /* Botones más grandes */
+  font-size: 16px; /* Texto más grande en botones */
+  font-weight: 600;
+  border-radius: 12px; /* Bordes más redondeados */
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.form-buttons .btn {
+  background: linear-gradient(90deg, var(--accent), #38bdf8);
+  border: none;
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.form-buttons .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(110, 231, 183, 0.3);
+}
+
+.form-buttons .small-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--muted);
+}
+
+.form-buttons .small-btn:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--accent);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Mejora visual adicional para el modal */
+#login-modal .modal-content {
+  padding: 30px; /* Más padding interno */
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  background: var(--card);
+  border-radius: 20px; /* Esquinas más redondeadas */
+}
+
+#login-modal .close-modal {
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+#login-modal .close-modal:hover {
+  background: rgba(255,255,255,0.1);
+  transform: scale(1.1);
+}
+
+/* Efecto de elevación cuando el modal está abierto */
+#login-modal {
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Estilo para las etiquetas visuales de los campos (opcional) */
+#login-form {
+  position: relative;
+}
+
+/* Indicador de campo obligatorio */
+#login-form input:required {
+  border-left: 3px solid var(--accent);
+}
+
+/* Animación suave al abrir el modal */
+#login-modal .modal-content {
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Mejora responsive para móviles */
+@media (max-width: 600px) {
+  #login-modal .modal-content {
+    margin: 10% auto;
+    width: 90%;
+    max-width: none;
+    padding: 25px;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+
+  .form-buttons .btn,
+  .form-buttons .small-btn {
+    width: 100%;
+  }
+}
+
+/* ============================================= */
+/* HEADER FIJO AL DESPLAZARSE */
+/* ============================================= */
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 90%;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(11, 18, 32, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Ajustar el padding del main para compensar el header fijo */
+main {
+  margin-top: 90px; /* Altura aproximada del header */
+}
+
+/* Asegurar que el sidebar esté por encima del header */
+.sidebar {
+  z-index: 1001;
+}
+
+.sidebar-overlay {
+  z-index: 1000;
+}
+
+/* Ajustes responsivos para el header fijo */
+@media (max-width: 768px) {
+  main {
+    margin-top: 80px; /* Menos espacio en móvil si el header es más pequeño */
+  }
+
+  header {
+    padding: 12px 16px;
+  }
+}
+
+/* Pequeño ajuste para el modal de login */
+#login-modal .modal-content {
+  margin-top: 10vh; /* Reducir margen superior para que no quede tapado por el header */
 }

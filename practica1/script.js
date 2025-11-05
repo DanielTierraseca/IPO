@@ -1085,3 +1085,151 @@ document.addEventListener('keydown', function(e) {
     closeLoginModalFunc();
   }
 });
+// =============================================
+// SISTEMA DE INICIO DE SESIÓN - CORREGIDO
+// =============================================
+
+function initLoginModal() {
+  console.log('🔧 Inicializando modal de login...');
+
+  const loginSidebarLink = document.getElementById('login-sidebar-link');
+  const loginModal = document.getElementById('login-modal');
+  const closeLoginModal = document.getElementById('close-login-modal');
+  const loginForm = document.getElementById('login-form');
+  const loginBtn = document.getElementById('login-btn');
+
+  console.log('Elementos encontrados:', {
+    loginSidebarLink: !!loginSidebarLink,
+    loginModal: !!loginModal,
+    closeLoginModal: !!closeLoginModal,
+    loginForm: !!loginForm,
+    loginBtn: !!loginBtn
+  });
+
+  if (!loginSidebarLink || !loginModal) {
+    console.error('❌ Elementos esenciales del login no encontrados');
+    return;
+  }
+
+  // ABRIR MODAL DE LOGIN
+  loginSidebarLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('👉 Clic en login-sidebar-link detectado');
+
+    // Cerrar el menú lateral primero
+    closeSidebarMenu();
+
+    // Pequeño delay para asegurar que el menú se cierre
+    setTimeout(() => {
+      console.log('🔄 Abriendo modal de login...');
+      openLoginModal();
+    }, 50);
+  });
+
+  // CERRAR MODAL
+  if (closeLoginModal) {
+    closeLoginModal.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeLoginModalFunc();
+    });
+  }
+
+  // CERRAR AL HACER CLIC FUERA
+  loginModal.addEventListener('click', function(e) {
+    if (e.target === loginModal) {
+      closeLoginModalFunc();
+    }
+  });
+
+  // FORMULARIO DE REGISTRO
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleRegistration();
+    });
+  }
+
+  // BOTÓN DE INICIO DE SESIÓN - CORREGIDO
+  if (loginBtn) {
+    loginBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🔄 Botón de inicio de sesión clickeado');
+      handleLogin();
+    });
+  }
+
+  console.log('✅ Modal de login inicializado correctamente');
+}
+
+function handleLogin() {
+  console.log('🔄 Ejecutando handleLogin...');
+
+  const email = document.getElementById('login-email')?.value;
+  const password = document.getElementById('login-password')?.value;
+
+  if (!email || !password) {
+    alert('Por favor, completa email y contraseña.');
+    return;
+  }
+
+  const storedUserData = localStorage.getItem('userData');
+
+  if (!storedUserData) {
+    alert('No hay usuarios registrados. Por favor, regístrate primero.');
+    return;
+  }
+
+  const userData = JSON.parse(storedUserData);
+
+  if (userData.email === email && userData.password === password) {
+    closeLoginModalFunc();
+    alert('¡Inicio de sesión exitoso! Bienvenido de nuevo ' + userData.name);
+    updateLoginUI(userData.name);
+  } else {
+    alert('Correo electrónico o contraseña incorrectos.');
+  }
+}
+
+function handleRegistration() {
+  console.log('🔄 Ejecutando handleRegistration...');
+
+  const email = document.getElementById('login-email')?.value;
+  const name = document.getElementById('login-name')?.value;
+  const password = document.getElementById('login-password')?.value;
+
+  if (!email || !name || !password) {
+    alert('Por favor, completa todos los campos.');
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    alert('Por favor, introduce un correo electrónico válido.');
+    return;
+  }
+
+  const userData = {
+    email: email,
+    name: name,
+    password: password,
+    registrationDate: new Date().toLocaleString('es-ES')
+  };
+
+  localStorage.setItem('userData', JSON.stringify(userData));
+  closeLoginModalFunc();
+  alert('¡Registro exitoso! Bienvenido ' + name);
+  updateLoginUI(name);
+}
+
+// Asegurar que la función closeSidebarMenu esté disponible globalmente
+function closeSidebarMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+  if (sidebar && sidebarOverlay) {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+    document.body.classList.remove('body-no-scroll');
+  }
+}
