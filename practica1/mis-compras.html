@@ -9,21 +9,39 @@
 </head>
 <body>
   <header>
-    <div class="brand">
-      <div class="logo">!e¡</div>
-      <div>
-        <div style="font-weight:800">ElectroInformatic</div>
-        <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
-      </div>
+  <div class="brand">
+    <div class="logo">!e¡</div>
+    <div>
+      <div style="font-weight:800">ElectroInformatic</div>
+      <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
     </div>
-    <nav>
-      <a href="index.html" class="nav-btn">Inicio</a>
-      <a href="comprar.html" class="nav-btn">Comprar</a>
-      <a href="reparar.html" class="nav-btn">Reparar</a>
-      <a href="mis-compras.html" class="nav-btn active">Mis Compras</a>
-      <a href="carrito.html" class="nav-btn" id="cart-btn">Carrito (0)</a>
-    </nav>
-  </header>
+  </div>
+
+  <div class="header-actions">
+    <!-- Carrito siempre visible -->
+    <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn">Carrito (0)</a>
+
+    <!-- Botón hamburguesa -->
+    <button class="hamburger-btn" id="hamburger-btn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Menú lateral -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar">
+  <button class="close-sidebar" id="close-sidebar">&times;</button>
+  <nav class="sidebar-nav">
+    <a href="index.html" class="sidebar-link">Inicio</a>
+    <a href="comprar.html" class="sidebar-link">Comprar</a>
+    <a href="reparar.html" class="sidebar-link">Reparar</a>
+    <a href="mis-compras.html" class="sidebar-link">Mis Compras</a>
+    <a href="#" class="sidebar-link" id="login-sidebar-link">Iniciar Sesión</a>
+  </nav>
+</aside>
 
   <main>
     <h2>Mis Compras</h2>
@@ -32,6 +50,26 @@
 
     <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
   </main>
+
+
+  <!-- Modal de Inicio de Sesión -->
+<div id="login-modal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" id="close-login-modal">&times;</span>
+    <div id="login-modal-body">
+      <h2>Iniciar Sesión / Registro</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Correo electrónico" required>
+        <input type="text" id="login-name" placeholder="Nombre completo" required>
+        <input type="password" id="login-password" placeholder="Contraseña" required>
+        <div class="form-buttons">
+          <button class="btn" type="submit">Registrarse</button>
+          <button class="small-btn" type="button" id="login-btn">Iniciar Sesión</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
   <script src="script.js"></script>
 </body>

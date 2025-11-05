@@ -1,26 +1,137 @@
 const PRODUCTS = [
-  {id:1, name:'Pccom revolt i7 3050', price:529, desc:'Portatil gaming de buen rendimiento.',image:'https://thumb.pccomponentes.com/w-530-530/articles/1091/10916702/1154-pccom-revolt-5060-intel-core-i7-14650hx-32gb-1tb-ssd-rtx-5060-16-comprar.jpg'},
-  {id:2, name:'SpeedBook 14"', price:649, desc:'Portátil ligero para trabajo y estudio.',image:'https://i.blogs.es/d44d83/hp-slatebook-14-1/450_1000.jpg'},
-  {id:3, name:'Auriculares SoundMax', price:79, desc:'Sonido envolvente y cancelación de ruido.',image:'https://m.media-amazon.com/images/I/51xTiE941pL._UF1000,1000_QL80_.jpg'},
-  {id:4, name:'Smartwatch FitTime', price:119, desc:'Monitoriza salud y notificaciones.',image:'https://m.media-amazon.com/images/I/61zAWem6QjL.jpg'},
-  {id:5, name:'Monitor UltraView 27"', price:219, desc:'Pantalla Full HD con colores vibrantes y marco delgado.',image:'https://www.digitaltigers.com/images/product/gallery/uvquad27-wid1260.jpg'},
-  {id:6, name:'Teclado Mecánico ProKey', price:89, desc:'Retroiluminado RGB y switches de alta durabilidad.',image:'https://img.pccomponentes.com/articles/1086/10861649/2309-edifier-g4k-teclado-mecanico-inalambrico-gaming-negro-comprar.jpg'},
-  {id:7, name:'Ratón Óptico SwiftClick', price:49, desc:'Precisión extrema y diseño ergonómico para largas sesiones.',image:'https://www.ngs.eu/images/productos/M/Raton_optico_USB_NGS_silver_Tick_02.jpg'},
-  {id:8, name:'Disco SSD FastDrive 1TB', price:129, desc:'Velocidad de lectura y escritura ultrarrápida.',image:'https://media.adeo.com/mkp/f2107145a9df74f5e1738f160ce9542e/media.jpeg'},
-  {id:9, name:'Tarjeta Gráfica PowerX 4060', price:449, desc:'Rendimiento ideal para gaming y edición de video.',image:'https://dcdn-us.mitiendanube.com/stores/004/850/241/products/tarjeta-grafica-pny-nvidia-geforce-rtx-4060-front-c57f7fe915e8129e7a17286807838281-1024-1024.png'},
-  {id:10, name:'Impresora JetPrint 3000', price:159, desc:'Impresión rápida con conectividad WiFi y Bluetooth.',image:'https://m.media-amazon.com/images/I/61Zl8Cf3PDL._AC_UF894,1000_QL80_.jpg'},
-  {id:11, name:'Router WiFi TurboNet AX6000', price:189, desc:'Cobertura amplia y soporte para WiFi 6.',image:'https://m.media-amazon.com/images/I/6109HWXqgXL._AC_UF350,350_QL80_.jpg'},
-  {id:12, name:'Cámara Web ClearView HD', price:69, desc:'Resolución 1080p ideal para videollamadas y streaming.',image:'https://informaticaeducativa.es/wp-content/uploads/2020/07/webcam-informaticaeducativa.es_.png'},
-  {id:13, name:'Altavoces BassBoom 2.1', price:99, desc:'Potente sonido con graves profundos y diseño moderno.',image:'https://m.media-amazon.com/images/I/81ETcqAfWIL._AC_UF894,1000_QL80_.jpg'},
-  {id:14, name:'Memoria RAM HyperSpeed 16GB', price:75, desc:'Rendimiento superior para multitarea y gaming.',image:'https://m.media-amazon.com/images/I/61aDeyMWIsL._UF894,1000_QL80_.jpg'},
-  {id:15, name:'Tablet TabX 10"', price:259, desc:'Pantalla grande y batería de larga duración para entretenimiento.',image:'https://image.made-in-china.com/202f0j00JKUhSjlFrgGr/Mega-Tab-X-Tablet-PC-for-Student-Learing-10-1-Inch-Android-Tablet-PC-for-Education.webp'}
+  {
+    id:1,
+    name:'Pccom revolt i7 3050',
+    price:529,
+    desc:'Portátil gaming de alto rendimiento con procesador Intel Core i7 y tarjeta gráfica RTX 3050. Ideal para gaming y trabajo intensivo.',
+    image:'https://thumb.pccomponentes.com/w-530-530/articles/1091/10916702/1154-pccom-revolt-5060-intel-core-i7-14650hx-32gb-1tb-ssd-rtx-5060-16-comprar.jpg',
+    specs:['Intel Core i7', '16GB RAM', '512GB SSD', 'RTX 3050', '15.6" FHD', 'Windows 11']
+  },
+  {
+    id:2,
+    name:'SpeedBook 14"',
+    price:649,
+    desc:'Portátil ultraligero perfecto para trabajo y estudio. Diseño elegante y batería de larga duración.',
+    image:'https://i.blogs.es/d44d83/hp-slatebook-14-1/450_1000.jpg',
+    specs:['Intel i5', '8GB RAM', '256GB SSD', 'Gráficos Intel Iris', '14" FHD', '12h batería']
+  },
+  {
+    id:3,
+    name:'Auriculares SoundMax',
+    price:79,
+    desc:'Auriculares con sonido envolvente y cancelación activa de ruido. Perfectos para música y gaming.',
+    image:'https://m.media-amazon.com/images/I/51xTiE941pL._UF1000,1000_QL80_.jpg',
+    specs:['Cancelación de ruido', '20h batería', 'Bluetooth 5.0', 'Micrófono integrado', 'Plegables']
+  },
+  {
+    id:4,
+    name:'Smartwatch FitTime',
+    price:119,
+    desc:'Monitoriza tu salud y notificaciones con este elegante smartwatch. Resistente al agua.',
+    image:'https://m.media-amazon.com/images/I/61zAWem6QjL.jpg',
+    specs:['Pantalla AMOLED', 'Resistente al agua', 'Monitoreo cardiaco', 'Notificaciones', '7 días batería']
+  },
+  {
+    id:5,
+    name:'Monitor UltraView 27"',
+    price:219,
+    desc:'Pantalla Full HD con colores vibrantes y marco delgado. Ideal para trabajo y entretenimiento.',
+    image:'https://www.digitaltigers.com/images/product/gallery/uvquad27-wid1260.jpg',
+    specs:['27" FHD', '75Hz', 'IPS', 'HDMI/VGA', 'Borde delgado']
+  },
+  {
+    id:6,
+    name:'Teclado Mecánico ProKey',
+    price:89,
+    desc:'Retroiluminado RGB y switches de alta durabilidad. Experiencia de escritura superior.',
+    image:'https://img.pccomponentes.com/articles/1086/10861649/2309-edifier-g4k-teclado-mecanico-inalambrico-gaming-negro-comprar.jpg',
+    specs:['Switches Blue', 'RGB', 'Teclas PBT', 'USB-C', 'Reposamuñecas']
+  },
+  {
+    id:7,
+    name:'Ratón Óptico SwiftClick',
+    price:49,
+    desc:'Precisión extrema y diseño ergonómico para largas sesiones. Conexión inalámbrica.',
+    image:'https://www.ngs.eu/images/productos/M/Raton_optico_USB_NGS_silver_Tick_02.jpg',
+    specs:['16000 DPI', 'Inalámbrico', '6 botones', '50h batería', 'Ergonómico']
+  },
+  {
+    id:8,
+    name:'Disco SSD FastDrive 1TB',
+    price:129,
+    desc:'Velocidad de lectura y escritura ultrarrápida. Mejora el rendimiento de tu equipo.',
+    image:'https://media.adeo.com/mkp/f2107145a9df74f5e1738f160ce9542e/media.jpeg',
+    specs:['1TB NVMe', '3500 MB/s', 'M.2', '5 años garantía']
+  },
+  {
+    id:9,
+    name:'Tarjeta Gráfica PowerX 4060',
+    price:449,
+    desc:'Rendimiento ideal para gaming y edición de video. Soporta los últimos juegos en alta calidad.',
+    image:'https://dcdn-us.mitiendanube.com/stores/004/850/241/products/tarjeta-grafica-pny-nvidia-geforce-rtx-4060-front-c57f7fe915e8129e7a17286807838281-1024-1024.png',
+    specs:['RTX 4060', '8GB GDDR6', 'DLSS 3', '3 ventiladores', 'PCIe 4.0']
+  },
+  {
+    id:10,
+    name:'Impresora JetPrint 3000',
+    price:159,
+    desc:'Impresión rápida con conectividad WiFi y Bluetooth. Multifunción a color.',
+    image:'https://m.media-amazon.com/images/I/61Zl8Cf3PDL._AC_UF894,1000_QL80_.jpg',
+    specs:['WiFi', 'Bluetooth', 'Escáner', 'Copiadora', 'Tinta continua']
+  },
+  {
+    id:11,
+    name:'Router WiFi TurboNet AX6000',
+    price:189,
+    desc:'Cobertura amplia y soporte para WiFi 6. Perfecto para hogares con muchos dispositivos.',
+    image:'https://m.media-amazon.com/images/I/6109HWXqgXL._AC_UF350,350_QL80_.jpg',
+    specs:['WiFi 6', '6000 Mbps', '8 antenas', 'Puerto 2.5G', 'App gestión']
+  },
+  {
+    id:12,
+    name:'Cámara Web ClearView HD',
+    price:69,
+    desc:'Resolución 1080p ideal para videollamadas y streaming. Micrófono integrado.',
+    image:'https://informaticaeducativa.es/wp-content/uploads/2020/07/webcam-informaticaeducativa.es_.png',
+    specs:['1080p 30fps', 'Micrófono', 'Enfoque automático', 'Clip ajustable', 'USB']
+  },
+  {
+    id:13,
+    name:'Altavoces BassBoom 2.1',
+    price:99,
+    desc:'Potente sonido con graves profundos y diseño moderno. Conexión Bluetooth y auxiliar.',
+    image:'https://m.media-amazon.com/images/I/81ETcqAfWIL._AC_UF894,1000_QL80_.jpg',
+    specs:['2.1 Canales', '100W', 'Bluetooth', 'Entrada auxiliar', 'Control remoto']
+  },
+  {
+    id:14,
+    name:'Memoria RAM HyperSpeed 16GB',
+    price:75,
+    desc:'Rendimiento superior para multitarea y gaming. Compatible con la mayoría de placas.',
+    image:'https://m.media-amazon.com/images/I/61aDeyMWIsL._UF894,1000_QL80_.jpg',
+    specs:['16GB DDR4', '3200MHz', 'CL16', 'Dual Channel', 'Disipador']
+  },
+  {
+    id:15,
+    name:'Tablet TabX 10"',
+    price:259,
+    desc:'Pantalla grande y batería de larga duración para entretenimiento y trabajo ligero.',
+    image:'https://image.made-in-china.com/202f0j00JKUhSjlFrgGr/Mega-Tab-X-Tablet-PC-for-Student-Learing-10-1-Inch-Android-Tablet-PC-for-Education.webp',
+    specs:['10" FHD', '64GB', '8h batería', 'Android', 'Cámara 8MP']
+  }
 ];
 
-// Cargar carrito y compras desde localStorage
+// Variables globales
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+let currentRating = 0;
+let currentProductId = null;
+let repairRequests = JSON.parse(localStorage.getItem('repairRequests')) || [];
 
-// Guardar en localStorage
+// =============================================
+// FUNCIONES DE ALMACENAMIENTO
+// =============================================
+
 function saveCart() {
   localStorage.setItem('cart', JSON.stringify(cart));
 }
@@ -29,17 +140,284 @@ function savePurchases() {
   localStorage.setItem('purchases', JSON.stringify(purchases));
 }
 
+function saveRepairRequests() {
+  localStorage.setItem('repairRequests', JSON.stringify(repairRequests));
+}
+
 // =============================================
-// FUNCIONALIDAD DE BÚSQUEDA
+// SISTEMA DE INICIO DE SESIÓN - COMPLETAMENTE CORREGIDO
 // =============================================
 
-// Función para buscar productos
+function initLoginModal() {
+  console.log('🔧 Inicializando modal de login...');
+
+  const loginSidebarLink = document.getElementById('login-sidebar-link');
+  const loginModal = document.getElementById('login-modal');
+  const closeLoginModal = document.getElementById('close-login-modal');
+  const loginForm = document.getElementById('login-form');
+  const loginBtn = document.getElementById('login-btn');
+
+  console.log('Elementos encontrados:', {
+    loginSidebarLink: !!loginSidebarLink,
+    loginModal: !!loginModal,
+    closeLoginModal: !!closeLoginModal,
+    loginForm: !!loginForm,
+    loginBtn: !!loginBtn
+  });
+
+  if (!loginSidebarLink) {
+    console.error('❌ No se encontró el enlace de login en el sidebar');
+    return;
+  }
+
+  if (!loginModal) {
+    console.error('❌ No se encontró el modal de login');
+    return;
+  }
+
+  // ABRIR MODAL DE LOGIN - ESTA ES LA PARTE CRÍTICA
+  loginSidebarLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('👉 Clic en login-sidebar-link detectado');
+
+    // Cerrar el menú lateral primero
+    closeSidebarMenu();
+
+    // Pequeño delay para asegurar que el menú se cierre antes de abrir el modal
+    setTimeout(() => {
+      console.log('🔄 Abriendo modal de login...');
+      openLoginModal();
+    }, 50);
+  });
+
+  // CERRAR MODAL
+  if (closeLoginModal) {
+    closeLoginModal.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeLoginModalFunc();
+    });
+  }
+
+  // CERRAR AL HACER CLIC FUERA
+  loginModal.addEventListener('click', function(e) {
+    if (e.target === loginModal) {
+      closeLoginModalFunc();
+    }
+  });
+
+  // FORMULARIO DE REGISTRO
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      handleRegistration();
+    });
+  }
+
+  // BOTÓN DE INICIO DE SESIÓN
+  if (loginBtn) {
+    loginBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      handleLogin();
+    });
+  }
+
+  console.log('✅ Modal de login inicializado correctamente');
+}
+
+function openLoginModal() {
+  const loginModal = document.getElementById('login-modal');
+  if (loginModal) {
+    loginModal.style.display = 'block';
+    document.body.classList.add('body-no-scroll');
+    console.log('✅ Modal de login abierto exitosamente');
+  } else {
+    console.error('❌ No se pudo abrir el modal de login - elemento no encontrado');
+  }
+}
+
+function closeLoginModalFunc() {
+  const loginModal = document.getElementById('login-modal');
+  if (loginModal) {
+    loginModal.style.display = 'none';
+    document.body.classList.remove('body-no-scroll');
+    console.log('✅ Modal de login cerrado');
+  }
+}
+
+function handleRegistration() {
+  const email = document.getElementById('login-email')?.value;
+  const name = document.getElementById('login-name')?.value;
+  const password = document.getElementById('login-password')?.value;
+
+  if (!email || !name || !password) {
+    alert('Por favor, completa todos los campos.');
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    alert('Por favor, introduce un correo electrónico válido.');
+    return;
+  }
+
+  const userData = {
+    email: email,
+    name: name,
+    password: password,
+    registrationDate: new Date().toLocaleString('es-ES')
+  };
+
+  localStorage.setItem('userData', JSON.stringify(userData));
+  closeLoginModalFunc();
+  alert('¡Registro exitoso! Bienvenido ' + name);
+  updateLoginUI(name);
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email')?.value;
+  const password = document.getElementById('login-password')?.value;
+
+  if (!email || !password) {
+    alert('Por favor, completa email y contraseña.');
+    return;
+  }
+
+  const storedUserData = localStorage.getItem('userData');
+
+  if (!storedUserData) {
+    alert('No hay usuarios registrados. Por favor, regístrate primero.');
+    return;
+  }
+
+  const userData = JSON.parse(storedUserData);
+
+  if (userData.email === email && userData.password === password) {
+    closeLoginModalFunc();
+    alert('¡Inicio de sesión exitoso! Bienvenido de nuevo ' + userData.name);
+    updateLoginUI(userData.name);
+  } else {
+    alert('Correo electrónico o contraseña incorrectos.');
+  }
+}
+
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function updateLoginUI(userName) {
+  const loginLink = document.getElementById('login-sidebar-link');
+  if (loginLink) {
+    loginLink.textContent = `Hola, ${userName}`;
+    loginLink.style.background = 'rgba(59, 130, 246, 0.1)';
+    loginLink.style.color = '#3b82f6';
+    loginLink.style.cursor = 'default';
+  }
+}
+
+function checkLoggedInUser() {
+  const storedUserData = localStorage.getItem('userData');
+  if (storedUserData) {
+    const userData = JSON.parse(storedUserData);
+    updateLoginUI(userData.name);
+  }
+}
+
+// =============================================
+// SISTEMA DE MENÚ HAMBURGUESA
+// =============================================
+
+function initHamburgerMenu() {
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+  const closeSidebar = document.getElementById('close-sidebar');
+
+  if (!hamburgerBtn || !sidebar) return;
+
+  function openSidebar() {
+    sidebar.classList.add('active');
+    sidebarOverlay.classList.add('active');
+    document.body.classList.add('body-no-scroll');
+  }
+
+  function closeSidebarMenu() {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+    document.body.classList.remove('body-no-scroll');
+  }
+
+  hamburgerBtn.addEventListener('click', openSidebar);
+  closeSidebar.addEventListener('click', closeSidebarMenu);
+  sidebarOverlay.addEventListener('click', closeSidebarMenu);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+      closeSidebarMenu();
+    }
+  });
+
+  const sidebarLinks = document.querySelectorAll('.sidebar-link');
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', closeSidebarMenu);
+  });
+}
+
+// =============================================
+// INICIALIZACIÓN PRINCIPAL
+// =============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Inicializando aplicación...');
+
+  // ORDEN CRÍTICO: menú primero, luego login
+  initHamburgerMenu();
+  initLoginModal();
+  checkLoggedInUser();
+
+  // Resto de inicializaciones...
+  if (document.getElementById('product-list')) {
+    renderProducts();
+    initSearch();
+  }
+  if (document.getElementById('cart-contents')) {
+    updateCartUI();
+  }
+  if (document.getElementById('purchase-list')) {
+    renderPurchases();
+  }
+  if (document.getElementById('repair-form')) {
+    initRepairPage();
+  }
+
+  updateCartCounter();
+
+  if (document.querySelector('.resenas-slider')) {
+    renderReviewsSlider();
+  }
+
+  initProductModal();
+
+  console.log('✅ Aplicación completamente inicializada');
+});
+
+// =============================================
+// FUNCIONALIDADES DE PRODUCTOS Y CARRITO
+// =============================================
+
+function initSearch() {
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', searchProducts);
+  }
+}
+
 function searchProducts() {
   const searchInput = document.getElementById('search-input');
   const searchTerm = searchInput.value.toLowerCase().trim();
 
   if (!searchTerm) {
-    renderProducts(); // Mostrar todos si no hay búsqueda
+    renderProducts();
     return;
   }
 
@@ -51,7 +429,6 @@ function searchProducts() {
   renderFilteredProducts(filteredProducts);
 }
 
-// Función para renderizar productos filtrados
 function renderFilteredProducts(filteredProducts) {
   const list = document.getElementById('product-list');
   if (!list) return;
@@ -66,6 +443,7 @@ function renderFilteredProducts(filteredProducts) {
   filteredProducts.forEach(p => {
     const div = document.createElement('div');
     div.className = 'card';
+    div.onclick = () => openProductModal(p.id);
     div.innerHTML = `
       <div class="thumb">
         <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
@@ -74,66 +452,12 @@ function renderFilteredProducts(filteredProducts) {
       <div class="muted">${p.desc}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="price">€${p.price}</div>
-        <div style="display:flex;gap:8px">
-          <button class="small-btn" onclick="showDetail(${p.id})">Ver</button>
-          <button class="small-btn" onclick="addToCart(${p.id})">Comprar</button>
-        </div>
+        <button class="small-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Comprar</button>
       </div>`;
     list.appendChild(div);
   });
 }
 
-// =============================================
-// FUNCIONALIDADES PRINCIPALES
-// =============================================
-
-// Inicialización cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-  // Solo ejecutar funciones si los elementos existen en la página actual
-  if (document.getElementById('product-list')) {
-    renderProducts();
-
-    // Inicializar búsqueda
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', searchProducts);
-      searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          searchProducts();
-        }
-      });
-    }
-  }
-  if (document.getElementById('cart-contents')) {
-    updateCartUI();
-  }
-  if (document.getElementById('purchase-list')) {
-    renderPurchases();
-  }
-
-  // Inicializar página de reparación si existe
-  if (document.querySelector('#repair-form form')) {
-    initRepairPage();
-  }
-
-  // Actualizar contador del carrito en todas las páginas
-  updateCartCounter();
-
-  // Renderizar slider de reseñas si existe
-  if (document.querySelector('.resenas-slider')) {
-    renderReviewsSlider();
-  }
-});
-
-function updateCartCounter() {
-  const cartBtn = document.getElementById('cart-btn');
-  if (cartBtn) {
-    const total = cart.reduce((sum,i)=>sum+i.qty,0);
-    cartBtn.textContent = `Carrito (${total})`;
-  }
-}
-
-// Render de productos
 function renderProducts() {
   const list = document.getElementById('product-list');
   if (!list) return;
@@ -142,6 +466,7 @@ function renderProducts() {
   PRODUCTS.forEach(p => {
     const div = document.createElement('div');
     div.className = 'card';
+    div.onclick = () => openProductModal(p.id);
     div.innerHTML = `
       <div class="thumb">
         <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
@@ -150,39 +475,20 @@ function renderProducts() {
       <div class="muted">${p.desc}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="price">€${p.price}</div>
-        <div style="display:flex;gap:8px">
-          <button class="small-btn" onclick="showDetail(${p.id})">Ver</button>
-          <button class="small-btn" onclick="addToCart(${p.id})">Comprar</button>
-        </div>
+        <button class="small-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Comprar</button>
       </div>`;
     list.appendChild(div);
   });
 }
 
-// Detalles
-function showDetail(id) {
-  const p = PRODUCTS.find(x => x.id === id);
-  const detail = document.getElementById('product-detail');
-  if (!detail) return;
-
-  detail.innerHTML = `
-    <div class="card detail" style="display:flex; gap: 20px; align-items: flex-start;">
-      <div style="flex: 0 0 220px;">
-        <div class="thumb">
-          <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
-        </div>
-      </div>
-      <div class="info" style="flex: 1;">
-        <h3>${p.name}</h3>
-        <p class="muted">${p.desc}</p>
-        <div class="price">€${p.price}</div>
-        <button class="btn" onclick="addToCart(${p.id}); window.location.href='carrito.html'">Añadir al carrito</button>
-      </div>
-    </div>`;
-  detail.scrollIntoView({behavior:'smooth'});
+function updateCartCounter() {
+  const total = cart.reduce((sum,i)=>sum+i.qty,0);
+  const cartBtn = document.getElementById('cart-btn');
+  if (cartBtn) {
+    cartBtn.textContent = `Carrito (${total})`;
+  }
 }
 
-// Carrito
 function addToCart(id) {
   const p = PRODUCTS.find(x => x.id === id);
   const existing = cart.find(i => i.id === id);
@@ -194,8 +500,6 @@ function addToCart(id) {
   saveCart();
   updateCartUI();
   updateCartCounter();
-
-  // Mostrar confirmación
   alert(`¡${p.name} añadido al carrito!`);
 }
 
@@ -250,30 +554,105 @@ function checkout() {
   purchases.push(...cart.map(i => ({...i})));
   savePurchases();
 
-  // Verificar que se guardó en localStorage
-  const verify = JSON.parse(localStorage.getItem('purchases'));
-  console.log('Verificación de localStorage (purchases):', verify);
-
   alert('¡Compra completada! Gracias por tu compra.');
   cart = [];
   saveCart();
   updateCartUI();
 
-  // Redirigir a mis compras después de pagar
   setTimeout(() => {
     window.location.href = 'mis-compras.html';
   }, 1000);
 }
 
-// Mis compras
+// =============================================
+// SISTEMA DE MODAL DE PRODUCTOS
+// =============================================
+
+function initProductModal() {
+  const modal = document.getElementById('product-modal');
+  const closeBtn = document.querySelector('#product-modal .close-modal');
+  const addToCartBtn = document.getElementById('modal-add-to-cart');
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeProductModal);
+  }
+
+  if (addToCartBtn) {
+    addToCartBtn.addEventListener('click', addToCartFromModal);
+  }
+
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeProductModal();
+      }
+    });
+  }
+}
+
+function openProductModal(productId) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+
+  currentProductId = productId;
+
+  const modal = document.getElementById('product-modal');
+  const modalBody = document.getElementById('modal-body');
+
+  if (!modal || !modalBody) return;
+
+  modalBody.innerHTML = `
+    <div class="modal-product-content">
+      <img src="${product.image}" alt="${product.name}" class="modal-product-image"
+           onerror="this.style.display='none';">
+      <div class="modal-product-image-placeholder" style="display:${product.image ? 'none' : 'flex'};">
+        ${product.name.split(' ')[0]}
+      </div>
+
+      <div class="modal-product-title">${product.name}</div>
+      <div class="modal-product-price">€${product.price}</div>
+      <div class="modal-product-desc">${product.desc}</div>
+
+      ${product.specs ? `
+        <div class="modal-product-specs">
+          <h4>Especificaciones técnicas:</h4>
+          <div class="specs-list">
+            ${product.specs.map(spec => `<div class="spec-item">${spec}</div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  modal.style.display = 'block';
+  document.body.classList.add('body-no-scroll');
+}
+
+function closeProductModal() {
+  const modal = document.getElementById('product-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.classList.remove('body-no-scroll');
+  }
+  currentProductId = null;
+}
+
+function addToCartFromModal() {
+  if (currentProductId) {
+    addToCart(currentProductId);
+    closeProductModal();
+  }
+}
+
+// =============================================
+// SISTEMA DE COMPRAS Y RESEÑAS
+// =============================================
+
 function renderPurchases() {
   const list = document.getElementById('purchase-list');
   if (!list) return;
 
-  // Recargar purchases desde localStorage por si acaso
   purchases = JSON.parse(localStorage.getItem('purchases')) || [];
-
-  console.log('Compras encontradas:', purchases); // Para depurar
 
   if (purchases.length === 0) {
     list.innerHTML = 'Aún no has comprado nada.';
@@ -286,11 +665,6 @@ function renderPurchases() {
     <div class="purchase-item" style="margin-bottom:20px; padding:16px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; background:var(--glass);">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div style="display:flex; gap: 12px; align-items: flex-start;">
-          ${p.image ? `
-            <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
-              <img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-          ` : ''}
           <div>
             <strong style="font-size:16px;">${p.name}</strong>
             <div class="muted">€${p.price} × ${p.qty} | Total: €${p.price * p.qty}</div>
@@ -314,52 +688,52 @@ function renderPurchases() {
   }).join('');
 }
 
-// Mostrar formulario de reseña
 function showReviewForm(purchaseIndex) {
   const purchase = purchases[purchaseIndex];
-  const reviewForm = `
-    <div id="review-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;">
-      <div class="card" style="max-width:500px; width:90%; margin:20px;">
-        <h3>Escribe tu reseña para ${purchase.name}</h3>
 
-        <div style="margin:16px 0; text-align:center;">
-          <div style="font-size:14px; margin-bottom:8px; color:var(--muted);">Calificación:</div>
-          <div id="rating-stars" style="display:flex; justify-content:center; gap:8px; font-size:24px;">
-            ${[1,2,3,4,5].map(star => `
-              <span style="cursor:pointer; color:#666;" onclick="setRating(${star})" id="star-${star}">⭐</span>
-            `).join('')}
+  const reviewFormHTML = `
+    <div id="review-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal" onclick="closeReviewForm()">&times;</span>
+        <div class="card">
+          <h3>Escribe tu reseña para ${purchase.name}</h3>
+
+          <div style="margin:16px 0; text-align:center;">
+            <div style="font-size:14px; margin-bottom:8px; color:var(--muted);">Calificación:</div>
+            <div id="rating-stars" style="display:flex; justify-content:center; gap:8px; font-size:24px;">
+              ${[1,2,3,4,5].map(star => `
+                <span style="cursor:pointer; color:#666;" onclick="setRating(${star})" id="star-${star}">⭐</span>
+              `).join('')}
+            </div>
+            <div id="rating-text" style="margin-top:8px; font-size:14px; color:var(--muted);">Selecciona las estrellas</div>
           </div>
-          <div id="rating-text" style="margin-top:8px; font-size:14px; color:var(--muted);">Selecciona las estrellas</div>
-        </div>
 
-        <textarea
-          id="review-text"
-          placeholder="Comparte tu experiencia con este producto... ¿Qué te gustó? ¿Qué mejorarías?"
-          rows="5"
-          style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; color:white; margin:12px 0;"
-        ></textarea>
+          <textarea
+            id="review-text"
+            placeholder="Comparte tu experiencia con este producto... ¿Qué te gustó? ¿Qué mejorarías?"
+            rows="5"
+            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; color:white; margin:12px 0;"
+          ></textarea>
 
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
-          <button class="small-btn" onclick="closeReviewForm()">Cancelar</button>
-          <button class="btn" onclick="submitReview(${purchaseIndex})">Publicar Reseña</button>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button class="small-btn" onclick="closeReviewForm()">Cancelar</button>
+            <button class="btn" onclick="submitReview(${purchaseIndex})">Publicar Reseña</button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  // Remover modal existente si hay uno
   const existingModal = document.getElementById('review-modal');
   if (existingModal) {
     existingModal.remove();
   }
 
-  document.body.insertAdjacentHTML('beforeend', reviewForm);
+  document.body.insertAdjacentHTML('beforeend', reviewFormHTML);
   currentRating = 0;
   updateStars(0);
+  document.body.classList.add('body-no-scroll');
 }
-
-// Variables globales para el formulario de reseña
-let currentRating = 0;
 
 function setRating(rating) {
   currentRating = rating;
@@ -376,7 +750,6 @@ function updateStars(rating) {
     "Excelente"
   ];
 
-  // Actualizar estrellas
   for (let i = 1; i <= 5; i++) {
     const star = document.getElementById(`star-${i}`);
     if (star) {
@@ -384,7 +757,6 @@ function updateStars(rating) {
     }
   }
 
-  // Actualizar texto
   const ratingText = document.getElementById('rating-text');
   if (ratingText) {
     ratingText.textContent = ratingTexts[rating];
@@ -405,7 +777,6 @@ function submitReview(purchaseIndex) {
     return;
   }
 
-  // Guardar la reseña
   if (!purchases[purchaseIndex].review) {
     purchases[purchaseIndex].review = {};
   }
@@ -419,19 +790,15 @@ function submitReview(purchaseIndex) {
   savePurchases();
   closeReviewForm();
   renderPurchases();
-
-  // ACTUALIZAR EL SLIDER DE RESEÑAS
   updateReviewsSlider();
 
-  // Mostrar confirmación
-  alert('¡Gracias por tu reseña! ✨ Ahora aparecerá en nuestra página principal.');
+  alert('¡Gracias por tu reseña! ✨');
 }
 
 function editReview(purchaseIndex) {
   const purchase = purchases[purchaseIndex];
   showReviewForm(purchaseIndex);
 
-  // Rellenar con datos existentes
   setTimeout(() => {
     if (purchase.review) {
       currentRating = purchase.review.rating;
@@ -446,31 +813,14 @@ function closeReviewForm() {
   if (modal) {
     modal.remove();
   }
-}
-
-// Cerrar modal con ESC
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeReviewForm();
-    closeEditRepairModal();
-  }
-});
-
-// Limpiar carrito (función útil para testing)
-function clearCart() {
-  cart = [];
-  saveCart();
-  updateCartUI();
-  alert('Carrito limpiado');
+  document.body.classList.remove('body-no-scroll');
 }
 
 // =============================================
 // SISTEMA DE RESEÑAS EN INICIO
 // =============================================
 
-// Función para obtener todas las reseñas (por defecto + usuario)
 function getAllReviews() {
-  // Reseñas por defecto
   const defaultReviews = [
     {text: '"El X-Phone me sorprendió, excelente batería."', rating: 5, emoji: '📱'},
     {text: '"SpeedBook va genial para clase y trabajo."', rating: 4, emoji: '💻'},
@@ -478,7 +828,6 @@ function getAllReviews() {
     {text: '"FitTime es cómodo y mide bien el pulso."', rating: 4, emoji: '⌚'}
   ];
 
-  // Reseñas del usuario desde localStorage
   const userReviews = [];
   const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
 
@@ -487,25 +836,20 @@ function getAllReviews() {
       userReviews.push({
         text: purchase.review.text,
         rating: purchase.review.rating,
-        emoji: '⭐', // Emoji genérico para reseñas de usuario
+        emoji: '⭐',
         product: purchase.name
       });
     }
   });
 
-  // Combinar y mezclar reseñas
   let allReviews = [...defaultReviews];
-
-  // Agregar reseñas de usuario (máximo 6 para no saturar)
   userReviews.slice(0, 6).forEach(review => {
     allReviews.push(review);
   });
 
-  // Mezclar el array para variedad
   return shuffleArray(allReviews);
 }
 
-// Función para mezclar un array (algoritmo Fisher-Yates)
 function shuffleArray(array) {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -515,14 +859,12 @@ function shuffleArray(array) {
   return newArray;
 }
 
-// Función para renderizar el slider de reseñas
 function renderReviewsSlider() {
   const sliderContainer = document.querySelector('.resenas-slider');
   if (!sliderContainer) return;
 
   const reviews = getAllReviews();
 
-  // Crear HTML para las reseñas
   let reviewsHTML = '';
   reviews.forEach(review => {
     const stars = '⭐'.repeat(review.rating);
@@ -534,11 +876,9 @@ function renderReviewsSlider() {
     `;
   });
 
-  // Duplicar las reseñas para crear un bucle infinito suave
   sliderContainer.innerHTML = reviewsHTML + reviewsHTML;
 }
 
-// Función para actualizar el slider cuando se añade una nueva reseña
 function updateReviewsSlider() {
   if (document.querySelector('.resenas-slider')) {
     renderReviewsSlider();
@@ -549,53 +889,49 @@ function updateReviewsSlider() {
 // SISTEMA DE REPARACIONES
 // =============================================
 
-// Cargar reparaciones desde localStorage
-let repairRequests = JSON.parse(localStorage.getItem('repairRequests')) || [];
-
-// Guardar reparaciones en localStorage
-function saveRepairRequests() {
-  localStorage.setItem('repairRequests', JSON.stringify(repairRequests));
+function initRepairPage() {
+  const repairForm = document.getElementById('repair-form');
+  if (repairForm) {
+    repairForm.addEventListener('submit', handleRepairSubmit);
+  }
+  renderRepairRequests();
 }
 
-// Función para manejar el envío del formulario de reparación
 function handleRepairSubmit(event) {
   event.preventDefault();
 
-  const form = event.target;
-  const name = form.querySelector('input[placeholder="Nombre"]').value;
-  const device = form.querySelector('input[placeholder="Dispositivo"]').value;
-  const description = form.querySelector('textarea').value;
+  const name = document.getElementById('repair-name').value;
+  const device = document.getElementById('repair-device').value;
+  const description = document.getElementById('repair-desc').value;
 
   const repairRequest = {
-    id: Date.now(), // ID único basado en timestamp
+    id: Date.now(),
     name: name,
     device: device,
     description: description,
     date: new Date().toLocaleDateString('es-ES'),
-    status: 'Pendiente' // Estado inicial
+    status: 'Pendiente'
   };
 
   repairRequests.push(repairRequest);
   saveRepairRequests();
   renderRepairRequests();
 
-  // Mostrar confirmación y limpiar formulario
   alert('✅ Solicitud de reparación enviada correctamente');
-  form.reset();
+  event.target.reset();
 }
 
-// Función para renderizar las solicitudes de reparación
 function renderRepairRequests() {
-  const container = document.getElementById('repair-requests-container');
+  const container = document.getElementById('repair-list');
   if (!container) return;
 
   if (repairRequests.length === 0) {
-    container.innerHTML = '<p class="muted" style="text-align: center; padding: 20px;">No hay solicitudes de reparación.</p>';
+    container.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
     return;
   }
 
   container.innerHTML = repairRequests.map((repair, index) => `
-    <div class="repair-item card" style="margin-bottom: 15px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: var(--glass);">
+    <div class="repair-item" style="margin-bottom: 15px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: var(--glass);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div style="flex: 1;">
           <strong style="font-size: 16px;">${repair.device}</strong>
@@ -620,7 +956,6 @@ function renderRepairRequests() {
   `).join('');
 }
 
-// Función para obtener color según el estado
 function getStatusColor(status) {
   const colors = {
     'Pendiente': '#f59e0b',
@@ -631,7 +966,6 @@ function getStatusColor(status) {
   return colors[status] || '#6b7280';
 }
 
-// Función para eliminar una solicitud de reparación
 function deleteRepairRequest(id) {
   if (confirm('¿Estás seguro de que quieres eliminar esta solicitud de reparación?')) {
     repairRequests = repairRequests.filter(repair => repair.id !== id);
@@ -640,74 +974,73 @@ function deleteRepairRequest(id) {
   }
 }
 
-// Función para editar una solicitud de reparación
 function editRepairRequest(id) {
   const repair = repairRequests.find(r => r.id === id);
   if (!repair) return;
 
-  // Crear modal de edición
-  const editModal = `
-    <div id="edit-repair-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;">
-      <div class="card" style="max-width:500px; width:90%; margin:20px;">
-        <h3>Editar Solicitud de Reparación</h3>
+  const editModalHTML = `
+    <div id="edit-repair-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal" onclick="closeEditRepairModal()">&times;</span>
+        <div class="card">
+          <h3>Editar Solicitud de Reparación</h3>
 
-        <form id="edit-repair-form" style="display: flex; flex-direction: column; gap: 12px;">
-          <input
-            type="text"
-            placeholder="Nombre"
-            value="${repair.name}"
-            required
-            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
-          >
-          <input
-            type="text"
-            placeholder="Dispositivo"
-            value="${repair.device}"
-            required
-            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
-          >
-          <textarea
-            placeholder="Descripción del fallo"
-            rows="4"
-            required
-            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; resize: vertical;"
-          >${repair.description}</textarea>
+          <form id="edit-repair-form" style="display: flex; flex-direction: column; gap: 12px;">
+            <input
+              type="text"
+              placeholder="Nombre"
+              value="${repair.name}"
+              required
+              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
+            >
+            <input
+              type="text"
+              placeholder="Dispositivo"
+              value="${repair.device}"
+              required
+              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
+            >
+            <textarea
+              placeholder="Descripción del fallo"
+              rows="4"
+              required
+              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; resize: vertical;"
+            >${repair.description}</textarea>
 
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <label style="color: var(--muted); font-size: 14px;">Estado:</label>
-            <select id="edit-repair-status" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px; color: white;">
-              <option value="Pendiente" ${repair.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-              <option value="En proceso" ${repair.status === 'En proceso' ? 'selected' : ''}>En proceso</option>
-              <option value="Completado" ${repair.status === 'Completado' ? 'selected' : ''}>Completado</option>
-              <option value="Cancelado" ${repair.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
-            </select>
-          </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="color: var(--muted); font-size: 14px;">Estado:</label>
+              <select id="edit-repair-status" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px; color: white;">
+                <option value="Pendiente" ${repair.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                <option value="En proceso" ${repair.status === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                <option value="Completado" ${repair.status === 'Completado' ? 'selected' : ''}>Completado</option>
+                <option value="Cancelado" ${repair.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+              </select>
+            </div>
 
-          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 16px;">
-            <button type="button" class="small-btn" onclick="closeEditRepairModal()">Cancelar</button>
-            <button type="submit" class="btn">Guardar Cambios</button>
-          </div>
-        </form>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 16px;">
+              <button type="button" class="small-btn" onclick="closeEditRepairModal()">Cancelar</button>
+              <button type="submit" class="btn">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   `;
 
-  // Remover modal existente si hay uno
   const existingModal = document.getElementById('edit-repair-modal');
   if (existingModal) {
     existingModal.remove();
   }
 
-  document.body.insertAdjacentHTML('beforeend', editModal);
+  document.body.insertAdjacentHTML('beforeend', editModalHTML);
+  document.body.classList.add('body-no-scroll');
 
-  // Configurar el evento del formulario de edición
   document.getElementById('edit-repair-form').addEventListener('submit', function(e) {
     e.preventDefault();
     updateRepairRequest(id);
   });
 }
 
-// Función para actualizar una solicitud de reparación
 function updateRepairRequest(id) {
   const form = document.getElementById('edit-repair-form');
   const name = form.querySelector('input[placeholder="Nombre"]').value;
@@ -732,19 +1065,23 @@ function updateRepairRequest(id) {
   }
 }
 
-// Función para cerrar el modal de edición
 function closeEditRepairModal() {
   const modal = document.getElementById('edit-repair-modal');
   if (modal) {
     modal.remove();
   }
+  document.body.classList.remove('body-no-scroll');
 }
 
-// Inicialización de la página de reparación
-function initRepairPage() {
-  const repairForm = document.querySelector('#repair-form form');
-  if (repairForm) {
-    repairForm.addEventListener('submit', handleRepairSubmit);
+// =============================================
+// MANEJO DE TECLA ESC
+// =============================================
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeReviewForm();
+    closeEditRepairModal();
+    closeProductModal();
+    closeLoginModalFunc();
   }
-  renderRepairRequests();
-}
+});
