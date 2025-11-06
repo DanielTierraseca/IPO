@@ -410,6 +410,10 @@ const Sidebar = {
 const Cart = {
   init() {
     this.updateCounter();
+    // También actualizar UI si estamos en la página del carrito
+    if (document.getElementById('cart-contents')) {
+      this.updateUI();
+    }
   },
 
   add(productId) {
@@ -674,9 +678,35 @@ const Products = {
 // SISTEMA DE COMPRAS Y RESEÑAS
 // =============================================
 
+// =============================================
+// SISTEMA DE COMPRAS Y RESEÑAS - CORREGIDO
+// =============================================
+
+// =============================================
+// SISTEMA DE COMPRAS Y RESEÑAS - CORREGIDO
+// =============================================
+
 const Purchases = {
   init() {
     this.render();
+    this.bindGlobalEvents();
+  },
+
+  bindGlobalEvents() {
+    // Usar event delegation para los botones dinámicos
+    document.addEventListener('click', (e) => {
+      // Botón "Añadir Reseña"
+      if (e.target.classList.contains('add-review-btn')) {
+        const purchaseIndex = parseInt(e.target.dataset.index);
+        this.showReviewForm(purchaseIndex);
+      }
+
+      // Botón "Editar Reseña"
+      if (e.target.classList.contains('edit-review-btn')) {
+        const purchaseIndex = parseInt(e.target.dataset.index);
+        this.editReview(purchaseIndex);
+      }
+    });
   },
 
   render() {
@@ -708,8 +738,8 @@ const Purchases = {
           </div>
           <div>
             ${!hasReview ?
-              `<button class="small-btn" onclick="Purchases.showReviewForm(${index})" style="margin-left:8px;">✍️ Añadir Reseña</button>` :
-              `<button class="small-btn" onclick="Purchases.editReview(${index})" style="margin-left:8px;">📝 Editar Reseña</button>`
+              `<button class="small-btn add-review-btn" data-index="${index}" style="margin-left:8px;">✍️ Añadir Reseña</button>` :
+              `<button class="small-btn edit-review-btn" data-index="${index}" style="margin-left:8px;">📝 Editar Reseña</button>`
             }
           </div>
         </div>
@@ -718,12 +748,13 @@ const Purchases = {
   },
 
   showReviewForm(purchaseIndex) {
+    console.log('🔴 Mostrar formulario para compra:', purchaseIndex);
     const purchase = state.purchases[purchaseIndex];
 
     const reviewFormHTML = `
-      <div id="review-modal" class="modal">
+      <div id="review-modal" class="modal" style="display: block;">
         <div class="modal-content">
-          <span class="close-modal" onclick="Purchases.closeReviewForm()">&times;</span>
+          <span class="close-modal" id="review-close-modal">&times;</span>
           <div class="card">
             <h3>Escribe tu reseña para ${purchase.name}</h3>
 
@@ -731,7 +762,7 @@ const Purchases = {
               <div style="font-size:14px; margin-bottom:8px; color:var(--muted);">Calificación:</div>
               <div id="rating-stars" style="display:flex; justify-content:center; gap:8px; font-size:24px;">
                 ${[1,2,3,4,5].map(star => `
-                  <span style="cursor:pointer; color:#666;" onclick="Purchases.setRating(${star})" id="star-${star}">⭐</span>
+                  <span style="cursor:pointer; color:#666;" data-rating="${star}" class="star" id="star-${star}">⭐</span>
                 `).join('')}
               </div>
               <div id="rating-text" style="margin-top:8px; font-size:14px; color:var(--muted);">Selecciona las estrellas</div>
@@ -745,23 +776,87 @@ const Purchases = {
             ></textarea>
 
             <div style="display:flex; gap:8px; justify-content:flex-end;">
-              <button class="small-btn" onclick="Purchases.closeReviewForm()">Cancelar</button>
-              <button class="btn" onclick="Purchases.submitReview(${purchaseIndex})">Publicar Reseña</button>
+              <button class="small-btn" id="review-cancel-btn">Cancelar</button>
+              <button class="btn" id="review-submit-btn" data-index="${purchaseIndex}">Publicar Reseña</button>
             </div>
           </div>
         </div>
       </div>
     `;
 
+    // Eliminar modal existente
     const existingModal = document.getElementById('review-modal');
     if (existingModal) {
       existingModal.remove();
     }
 
+    // Añadir nuevo modal
     document.body.insertAdjacentHTML('beforeend', reviewFormHTML);
+    document.body.classList.add('body-no-scroll');
+
+    // Vincular eventos del modal
+    this.bindReviewModalEvents(purchaseIndex);
+
     state.currentRating = 0;
     this.updateStars(0);
-    document.body.classList.add('body-no-scroll');
+  },
+
+  bindReviewModalEvents(purchaseIndex) {
+    // Cerrar modal
+    const closeBtn = document.getElementById('review-close-modal');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.closeReviewForm();
+      });
+    }
+
+    // Botón cancelar
+    const cancelBtn = document.getElementById('review-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.closeReviewForm();
+      });
+    }
+
+    // Event delegation para las estrellas
+    const ratingStarsContainer = document.getElementById('rating-stars');
+    if (ratingStarsContainer) {
+      ratingStarsContainer.addEventListener('click', (e) => {
+        const starElement = e.target.closest('[data-rating]');
+        if (starElement) {
+          const rating = parseInt(starElement.dataset.rating);
+          this.setRating(rating);
+        }
+      });
+    }
+
+    // Botón enviar
+    const submitBtn = document.getElementById('review-submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        this.submitReview(purchaseIndex);
+      });
+    }
+
+    // Cerrar al hacer clic fuera
+    const modal = document.getElementById('review-modal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target.id === 'review-modal') {
+          this.closeReviewForm();
+        }
+      });
+    }
+
+    // Cerrar con ESC
+    const closeOnEsc = (e) => {
+      if (e.key === 'Escape' && document.getElementById('review-modal')) {
+        this.closeReviewForm();
+        // Remover el event listener después de cerrar
+        document.removeEventListener('keydown', closeOnEsc);
+      }
+    };
+    document.addEventListener('keydown', closeOnEsc);
   },
 
   setRating(rating) {
@@ -779,10 +874,12 @@ const Purchases = {
       "Excelente"
     ];
 
+    // Actualizar todas las estrellas
     for (let i = 1; i <= 5; i++) {
       const star = document.getElementById(`star-${i}`);
       if (star) {
         star.style.color = i <= rating ? '#FFD700' : '#666';
+        star.style.transform = i <= rating ? 'scale(1.1)' : 'scale(1)';
       }
     }
 
@@ -819,22 +916,31 @@ const Purchases = {
     AppStorage.savePurchases();
     this.closeReviewForm();
     this.render();
-    Reviews.updateSlider();
+
+    // Actualizar slider de reseñas si existe
+    if (typeof Reviews !== 'undefined' && Reviews.updateSlider) {
+      Reviews.updateSlider();
+    }
 
     alert('¡Gracias por tu reseña! ✨');
   },
 
   editReview(purchaseIndex) {
+    console.log('🔴 Editando reseña para compra:', purchaseIndex);
     const purchase = state.purchases[purchaseIndex];
     this.showReviewForm(purchaseIndex);
 
+    // Usar setTimeout para asegurar que el DOM esté actualizado
     setTimeout(() => {
       if (purchase.review) {
         state.currentRating = purchase.review.rating;
         this.updateStars(state.currentRating);
-        document.getElementById('review-text').value = purchase.review.text;
+        const reviewTextArea = document.getElementById('review-text');
+        if (reviewTextArea) {
+          reviewTextArea.value = purchase.review.text;
+        }
       }
-    }, 100);
+    }, 50);
   },
 
   closeReviewForm() {
@@ -843,6 +949,9 @@ const Purchases = {
       modal.remove();
     }
     document.body.classList.remove('body-no-scroll');
+
+    // Limpiar el rating actual
+    state.currentRating = 0;
   }
 };
 
@@ -1184,6 +1293,10 @@ const Repairs = {
 // INICIALIZACIÓN PRINCIPAL
 // =============================================
 
+// =============================================
+// INICIALIZACIÓN PRINCIPAL
+// =============================================
+
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Inicializando aplicación...');
 
@@ -1199,13 +1312,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (document.getElementById('repair-form')) {
-  Repairs.init();
-}
+    Repairs.init();
+  }
 
   if (document.querySelector('.resenas-slider')) {
     Reviews.initSlider();
   }
 
+  // Inicializar carrito en página de carrito
+  if (document.getElementById('cart-contents')) {
+    Cart.updateUI();
+  }
 
   console.log('✅ Aplicación completamente inicializada');
 });
