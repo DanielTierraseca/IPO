@@ -1,3 +1,7 @@
+// =============================================
+// CONSTANTES Y VARIABLES GLOBALES
+// =============================================
+
 const PRODUCTS = [
   {
     id:1,
@@ -121,248 +125,1061 @@ const PRODUCTS = [
   }
 ];
 
-// Variables globales
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let purchases = JSON.parse(localStorage.getItem('purchases')) || [];
-let currentRating = 0;
-let currentProductId = null;
-let repairRequests = JSON.parse(localStorage.getItem('repairRequests')) || [];
+// Estado global
+const state = {
+  cart: JSON.parse(localStorage.getItem('cart')) || [],
+  purchases: JSON.parse(localStorage.getItem('purchases')) || [],
+  repairRequests: JSON.parse(localStorage.getItem('repairRequests')) || [],
+  currentRating: 0,
+  currentProductId: null
+};
 
 // =============================================
-// FUNCIONES DE ALMACENAMIENTO
+// SISTEMA DE ALMACENAMIENTO
 // =============================================
 
-function saveCart() {
-  localStorage.setItem('cart', JSON.stringify(cart));
-}
+const AppStorage = {
+  saveCart() {
+    localStorage.setItem('cart', JSON.stringify(state.cart));
+  },
 
-function savePurchases() {
-  localStorage.setItem('purchases', JSON.stringify(purchases));
-}
+  savePurchases() {
+    localStorage.setItem('purchases', JSON.stringify(state.purchases));
+  },
 
-function saveRepairRequests() {
-  localStorage.setItem('repairRequests', JSON.stringify(repairRequests));
-}
+  saveRepairRequests() {
+    localStorage.setItem('repairRequests', JSON.stringify(state.repairRequests));
+  },
 
-// =============================================
-// SISTEMA DE INICIO DE SESIÓN - COMPLETAMENTE CORREGIDO
-// =============================================
+  getUser() {
+    const userData = localStorage.getItem('userData');
+    return userData ? JSON.parse(userData) : null;
+  },
 
-function initLoginModal() {
-  console.log('🔧 Inicializando modal de login...');
+  saveUser(userData) {
+    localStorage.setItem('userData', JSON.stringify(userData));
+  },
 
-  const loginSidebarLink = document.getElementById('login-sidebar-link');
-  const loginModal = document.getElementById('login-modal');
-  const closeLoginModal = document.getElementById('close-login-modal');
-  const loginForm = document.getElementById('login-form');
-  const loginBtn = document.getElementById('login-btn');
-
-  console.log('Elementos encontrados:', {
-    loginSidebarLink: !!loginSidebarLink,
-    loginModal: !!loginModal,
-    closeLoginModal: !!closeLoginModal,
-    loginForm: !!loginForm,
-    loginBtn: !!loginBtn
-  });
-
-  if (!loginSidebarLink) {
-    console.error('❌ No se encontró el enlace de login en el sidebar');
-    return;
+  removeUser() {
+    localStorage.removeItem('userData');
   }
+};
 
-  if (!loginModal) {
-    console.error('❌ No se encontró el modal de login');
-    return;
-  }
+// =============================================
+// SISTEMA DE AUTENTICACIÓN
+// =============================================
 
-  // ABRIR MODAL DE LOGIN - ESTA ES LA PARTE CRÍTICA
-  loginSidebarLink.addEventListener('click', function(e) {
+const Auth = {
+  init() {
+    this.bindEvents();
+    this.checkLoggedInUser();
+  },
+
+  bindEvents() {
+    const loginSidebarLink = document.getElementById('login-sidebar-link');
+    const closeLoginModal = document.getElementById('close-login-modal');
+    const loginForm = document.getElementById('login-form');
+    const loginBtn = document.getElementById('login-btn');
+    const loginModal = document.getElementById('login-modal');
+
+    if (loginSidebarLink) {
+      loginSidebarLink.addEventListener('click', this.handleLoginSidebarClick.bind(this));
+    }
+
+    if (closeLoginModal) {
+      closeLoginModal.addEventListener('click', this.closeModal.bind(this));
+    }
+
+    if (loginModal) {
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) this.closeModal();
+      });
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', this.handleRegistration.bind(this));
+    }
+
+    if (loginBtn) {
+      // Clonar y reemplazar el botón para evitar duplicados de event listeners
+      const newLoginBtn = loginBtn.cloneNode(true);
+      loginBtn.parentNode.replaceChild(newLoginBtn, loginBtn);
+      newLoginBtn.addEventListener('click', this.handleLogin.bind(this));
+    }
+  },
+
+  handleLoginSidebarClick(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('👉 Clic en login-sidebar-link detectado');
 
-    // Cerrar el menú lateral primero
-    closeSidebarMenu();
+    const user = AppStorage.getUser();
+    if (user) {
+      if (confirm(`¿Deseas cerrar sesión, ${user.name}?`)) {
+        this.logout();
+      }
+    } else {
+      Sidebar.close();
+      setTimeout(() => this.openModal(), 50);
+    }
+  },
 
-    // Pequeño delay para asegurar que el menú se cierre antes de abrir el modal
+  handleLogin(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const email = document.getElementById('login-email')?.value;
+    const password = document.getElementById('login-password')?.value;
+
+    if (!email || !password) {
+      alert('Por favor, completa email y contraseña.');
+      return;
+    }
+
+    const userData = AppStorage.getUser();
+
+    if (!userData) {
+      alert('No hay usuarios registrados. Por favor, regístrate primero.');
+      return;
+    }
+
+    if (userData.email === email && userData.password === password) {
+      this.closeModal();
+      alert('¡Inicio de sesión exitoso! Bienvenido de nuevo ' + userData.name);
+      this.updateUI(userData.name);
+    } else {
+      alert('Correo electrónico o contraseña incorrectos.');
+    }
+  },
+
+  handleRegistration(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('login-email')?.value;
+    const name = document.getElementById('login-name')?.value;
+    const password = document.getElementById('login-password')?.value;
+
+    if (!email || !name || !password) {
+      alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    if (!this.isValidEmail(email)) {
+      alert('Por favor, introduce un correo electrónico válido.');
+      return;
+    }
+
+    const userData = {
+      email: email,
+      name: name,
+      password: password,
+      registrationDate: new Date().toLocaleString('es-ES')
+    };
+
+    AppStorage.saveUser(userData);
+    this.closeModal();
+    alert('¡Registro exitoso! Bienvenido ' + name);
+    this.updateUI(name);
+  },
+
+  logout() {
+    AppStorage.removeUser();
+    this.updateUI(null);
+    alert('Has cerrado sesión correctamente.');
+  },
+
+  updateUI(userName) {
+    const loginLink = document.getElementById('login-sidebar-link');
+    if (!loginLink) return;
+
+    if (userName) {
+      loginLink.innerHTML = `
+        <div style="text-align: center;">
+          <div style="font-weight: 600; margin-bottom: 4px;">👋 Hola, ${userName}</div>
+          <div style="font-size: 12px; color: var(--muted);">Cerrar sesión</div>
+        </div>
+      `;
+      loginLink.style.background = 'rgba(59, 130, 246, 0.1)';
+      loginLink.style.color = '#3b82f6';
+    } else {
+      loginLink.innerHTML = 'Iniciar Sesión';
+      loginLink.style.background = 'rgba(110, 231, 183, 0.1)';
+      loginLink.style.color = 'var(--accent)';
+    }
+    loginLink.style.cursor = 'pointer';
+  },
+
+  checkLoggedInUser() {
+    const user = AppStorage.getUser();
+    if (user) {
+      this.updateUI(user.name);
+    } else {
+      this.updateUI(null);
+    }
+  },
+
+  openModal() {
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) {
+      loginModal.style.display = 'block';
+      document.body.classList.add('body-no-scroll');
+
+      // Re-bind del botón de login cuando se abre el modal
+      const loginBtn = document.getElementById('login-btn');
+      if (loginBtn) {
+        loginBtn.onclick = (e) => this.handleLogin(e);
+      }
+    }
+  },
+
+  closeModal() {
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) {
+      loginModal.style.display = 'none';
+      document.body.classList.remove('body-no-scroll');
+    }
+  },
+
+  isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+};
+
+// =============================================
+// SISTEMA DE MENÚ LATERAL
+// =============================================
+
+const Sidebar = {
+  init() {
+    this.bindEvents();
+  },
+
+  bindEvents() {
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const closeSidebar = document.getElementById('close-sidebar');
+
+    if (!hamburgerBtn || !sidebar) return;
+
+    hamburgerBtn.addEventListener('click', () => this.open());
+    closeSidebar.addEventListener('click', () => this.close());
+    sidebarOverlay.addEventListener('click', () => this.close());
+
+    // Cerrar con ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+        this.close();
+      }
+    });
+
+    // Cerrar al hacer clic en enlaces
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    sidebarLinks.forEach(link => {
+      link.addEventListener('click', () => this.close());
+    });
+  },
+
+  open() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (sidebar && sidebarOverlay) {
+      sidebar.classList.add('active');
+      sidebarOverlay.classList.add('active');
+      document.body.classList.add('body-no-scroll');
+    }
+  },
+
+  close() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (sidebar && sidebarOverlay) {
+      sidebar.classList.remove('active');
+      sidebarOverlay.classList.remove('active');
+      document.body.classList.remove('body-no-scroll');
+    }
+  }
+};
+
+// =============================================
+// SISTEMA DE CARRITO
+// =============================================
+
+const Cart = {
+  init() {
+    this.updateCounter();
+  },
+
+  add(productId) {
+    const product = PRODUCTS.find(p => p.id === productId);
+    if (!product) return;
+
+    const existingItem = state.cart.find(item => item.id === productId);
+
+    if (existingItem) {
+      existingItem.qty++;
+    } else {
+      state.cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        qty: 1
+      });
+    }
+
+    AppStorage.saveCart();
+    this.updateUI();
+    this.updateCounter();
+    alert(`¡${product.name} añadido al carrito!`);
+  },
+
+  remove(productId) {
+    state.cart = state.cart.filter(item => item.id !== productId);
+    AppStorage.saveCart();
+    this.updateUI();
+    this.updateCounter();
+  },
+
+  updateQty(productId, delta) {
+    const item = state.cart.find(item => item.id === productId);
+    if (!item) return;
+
+    item.qty += delta;
+
+    if (item.qty <= 0) {
+      this.remove(productId);
+    } else {
+      AppStorage.saveCart();
+      this.updateUI();
+      this.updateCounter();
+    }
+  },
+
+  updateUI() {
+    const cartContents = document.getElementById('cart-contents');
+    if (!cartContents) return;
+
+    if (state.cart.length === 0) {
+      cartContents.innerHTML = 'Tu carrito está vacío.';
+      return;
+    }
+
+    let html = '';
+    state.cart.forEach(item => {
+      html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <div>
+            <strong>${item.name}</strong>
+            <div class="muted">€${item.price} × ${item.qty}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button class="small-btn" onclick="Cart.updateQty(${item.id}, -1)">-</button>
+            <span style="padding: 0 8px;">${item.qty}</span>
+            <button class="small-btn" onclick="Cart.updateQty(${item.id}, 1)">+</button>
+          </div>
+        </div>
+      `;
+    });
+
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+    html += `
+      <div style="margin-top:16px; padding:12px; background:var(--glass); border-radius:8px;">
+        <strong>Total: €${total}</strong>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn" onclick="Cart.checkout()" style="width:100%">Pagar</button>
+      </div>
+    `;
+
+    cartContents.innerHTML = html;
+  },
+
+  updateCounter() {
+    const total = state.cart.reduce((sum, item) => sum + item.qty, 0);
+    const cartBtn = document.getElementById('cart-btn');
+    if (cartBtn) {
+      cartBtn.textContent = `Carrito (${total})`;
+    }
+  },
+
+  checkout() {
+    if (state.cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+
+    // Agregar a compras
+    state.purchases.push(...state.cart.map(item => ({...item})));
+    AppStorage.savePurchases();
+
+    alert('¡Compra completada! Gracias por tu compra.');
+
+    // Limpiar carrito
+    state.cart = [];
+    AppStorage.saveCart();
+    this.updateUI();
+    this.updateCounter();
+
+    // Redirigir a mis compras
     setTimeout(() => {
-      console.log('🔄 Abriendo modal de login...');
-      openLoginModal();
-    }, 50);
-  });
-
-  // CERRAR MODAL
-  if (closeLoginModal) {
-    closeLoginModal.addEventListener('click', function(e) {
-      e.preventDefault();
-      closeLoginModalFunc();
-    });
+      window.location.href = 'mis-compras.html';
+    }, 1000);
   }
-
-  // CERRAR AL HACER CLIC FUERA
-  loginModal.addEventListener('click', function(e) {
-    if (e.target === loginModal) {
-      closeLoginModalFunc();
-    }
-  });
-
-  // FORMULARIO DE REGISTRO
-  if (loginForm) {
-    loginForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      handleRegistration();
-    });
-  }
-
-  // BOTÓN DE INICIO DE SESIÓN
-  if (loginBtn) {
-    loginBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      handleLogin();
-    });
-  }
-
-  console.log('✅ Modal de login inicializado correctamente');
-}
-
-function openLoginModal() {
-  const loginModal = document.getElementById('login-modal');
-  if (loginModal) {
-    loginModal.style.display = 'block';
-    document.body.classList.add('body-no-scroll');
-    console.log('✅ Modal de login abierto exitosamente');
-  } else {
-    console.error('❌ No se pudo abrir el modal de login - elemento no encontrado');
-  }
-}
-
-function closeLoginModalFunc() {
-  const loginModal = document.getElementById('login-modal');
-  if (loginModal) {
-    loginModal.style.display = 'none';
-    document.body.classList.remove('body-no-scroll');
-    console.log('✅ Modal de login cerrado');
-  }
-}
-
-function handleRegistration() {
-  const email = document.getElementById('login-email')?.value;
-  const name = document.getElementById('login-name')?.value;
-  const password = document.getElementById('login-password')?.value;
-
-  if (!email || !name || !password) {
-    alert('Por favor, completa todos los campos.');
-    return;
-  }
-
-  if (!isValidEmail(email)) {
-    alert('Por favor, introduce un correo electrónico válido.');
-    return;
-  }
-
-  const userData = {
-    email: email,
-    name: name,
-    password: password,
-    registrationDate: new Date().toLocaleString('es-ES')
-  };
-
-  localStorage.setItem('userData', JSON.stringify(userData));
-  closeLoginModalFunc();
-  alert('¡Registro exitoso! Bienvenido ' + name);
-  updateLoginUI(name);
-}
-
-function handleLogin() {
-  const email = document.getElementById('login-email')?.value;
-  const password = document.getElementById('login-password')?.value;
-
-  if (!email || !password) {
-    alert('Por favor, completa email y contraseña.');
-    return;
-  }
-
-  const storedUserData = localStorage.getItem('userData');
-
-  if (!storedUserData) {
-    alert('No hay usuarios registrados. Por favor, regístrate primero.');
-    return;
-  }
-
-  const userData = JSON.parse(storedUserData);
-
-  if (userData.email === email && userData.password === password) {
-    closeLoginModalFunc();
-    alert('¡Inicio de sesión exitoso! Bienvenido de nuevo ' + userData.name);
-    updateLoginUI(userData.name);
-  } else {
-    alert('Correo electrónico o contraseña incorrectos.');
-  }
-}
-
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function updateLoginUI(userName) {
-  const loginLink = document.getElementById('login-sidebar-link');
-  if (loginLink) {
-    loginLink.textContent = `Hola, ${userName}`;
-    loginLink.style.background = 'rgba(59, 130, 246, 0.1)';
-    loginLink.style.color = '#3b82f6';
-    loginLink.style.cursor = 'default';
-  }
-}
-
-function checkLoggedInUser() {
-  const storedUserData = localStorage.getItem('userData');
-  if (storedUserData) {
-    const userData = JSON.parse(storedUserData);
-    updateLoginUI(userData.name);
-  }
-}
+};
 
 // =============================================
-// SISTEMA DE MENÚ HAMBURGUESA
+// SISTEMA DE PRODUCTOS
 // =============================================
 
-function initHamburgerMenu() {
-  const hamburgerBtn = document.getElementById('hamburger-btn');
-  const sidebar = document.getElementById('sidebar');
-  const sidebarOverlay = document.getElementById('sidebar-overlay');
-  const closeSidebar = document.getElementById('close-sidebar');
+const Products = {
+  init() {
+    if (document.getElementById('product-list')) {
+      this.render();
+      this.initSearch();
+    }
+    this.initModal();
+  },
 
-  if (!hamburgerBtn || !sidebar) return;
+  render(filteredProducts = null) {
+    const list = document.getElementById('product-list');
+    if (!list) return;
 
-  function openSidebar() {
-    sidebar.classList.add('active');
-    sidebarOverlay.classList.add('active');
+    const productsToRender = filteredProducts || PRODUCTS;
+
+    list.innerHTML = '';
+    productsToRender.forEach(product => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.onclick = () => this.openModal(product.id);
+      div.innerHTML = `
+        <div class="thumb">
+          <img src="${product.image}" alt="${product.name}"
+               onerror="this.style.display='none'; this.parentElement.innerHTML='${product.name.split(' ')[0]}';
+               this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)';
+               this.parentElement.style.display='flex';
+               this.parentElement.style.alignItems='center';
+               this.parentElement.style.justifyContent='center';">
+        </div>
+        <div class="product-title">${product.name}</div>
+        <div class="muted">${product.desc}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="price">€${product.price}</div>
+          <button class="small-btn" onclick="event.stopPropagation(); Cart.add(${product.id})">Comprar</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  initSearch() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => this.search(e.target.value));
+    }
+  },
+
+  search(searchTerm) {
+    if (!searchTerm) {
+      this.render();
+      return;
+    }
+
+    const filteredProducts = PRODUCTS.filter(product =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.desc.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    this.render(filteredProducts);
+  },
+
+  initModal() {
+    const modal = document.getElementById('product-modal');
+    const closeBtn = document.querySelector('#product-modal .close-modal');
+    const addToCartBtn = document.getElementById('modal-add-to-cart');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', this.closeModal);
+    }
+
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener('click', this.addToCartFromModal);
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) this.closeModal();
+      });
+    }
+  },
+
+  openModal(productId) {
+    const product = PRODUCTS.find(p => p.id === productId);
+    if (!product) return;
+
+    state.currentProductId = productId;
+
+    const modal = document.getElementById('product-modal');
+    const modalBody = document.getElementById('modal-body');
+
+    if (!modal || !modalBody) return;
+
+    modalBody.innerHTML = `
+      <div class="modal-product-content">
+        <img src="${product.image}" alt="${product.name}" class="modal-product-image"
+             onerror="this.style.display='none';">
+        <div class="modal-product-image-placeholder" style="display:${product.image ? 'none' : 'flex'};">
+          ${product.name.split(' ')[0]}
+        </div>
+
+        <div class="modal-product-title">${product.name}</div>
+        <div class="modal-product-price">€${product.price}</div>
+        <div class="modal-product-desc">${product.desc}</div>
+
+        ${product.specs ? `
+          <div class="modal-product-specs">
+            <h4>Especificaciones técnicas:</h4>
+            <div class="specs-list">
+              ${product.specs.map(spec => `<div class="spec-item">${spec}</div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    modal.style.display = 'block';
     document.body.classList.add('body-no-scroll');
-  }
+  },
 
-  function closeSidebarMenu() {
-    sidebar.classList.remove('active');
-    sidebarOverlay.classList.remove('active');
+  closeModal() {
+    const modal = document.getElementById('product-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('body-no-scroll');
+    }
+    state.currentProductId = null;
+  },
+
+  addToCartFromModal() {
+    if (state.currentProductId) {
+      Cart.add(state.currentProductId);
+      Products.closeModal();
+    }
+  }
+};
+
+// =============================================
+// SISTEMA DE COMPRAS Y RESEÑAS
+// =============================================
+
+const Purchases = {
+  init() {
+    this.render();
+  },
+
+  render() {
+    const list = document.getElementById('purchase-list');
+    if (!list) return;
+
+    if (state.purchases.length === 0) {
+      list.innerHTML = 'Aún no has comprado nada.';
+      return;
+    }
+
+    list.innerHTML = state.purchases.map((purchase, index) => {
+      const hasReview = purchase.review && purchase.review.text;
+      return `
+      <div class="purchase-item" style="margin-bottom:20px; padding:16px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; background:var(--glass);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div style="display:flex; gap: 12px; align-items: flex-start;">
+            <div>
+              <strong style="font-size:16px;">${purchase.name}</strong>
+              <div class="muted">€${purchase.price} × ${purchase.qty} | Total: €${purchase.price * purchase.qty}</div>
+              ${hasReview ? `
+                <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                  <div><strong>Tu reseña:</strong> ${purchase.review.rating}⭐</div>
+                  <div class="muted">"${purchase.review.text}"</div>
+                  <small class="muted">${purchase.review.date || 'Sin fecha'}</small>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          <div>
+            ${!hasReview ?
+              `<button class="small-btn" onclick="Purchases.showReviewForm(${index})" style="margin-left:8px;">✍️ Añadir Reseña</button>` :
+              `<button class="small-btn" onclick="Purchases.editReview(${index})" style="margin-left:8px;">📝 Editar Reseña</button>`
+            }
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  showReviewForm(purchaseIndex) {
+    const purchase = state.purchases[purchaseIndex];
+
+    const reviewFormHTML = `
+      <div id="review-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-modal" onclick="Purchases.closeReviewForm()">&times;</span>
+          <div class="card">
+            <h3>Escribe tu reseña para ${purchase.name}</h3>
+
+            <div style="margin:16px 0; text-align:center;">
+              <div style="font-size:14px; margin-bottom:8px; color:var(--muted);">Calificación:</div>
+              <div id="rating-stars" style="display:flex; justify-content:center; gap:8px; font-size:24px;">
+                ${[1,2,3,4,5].map(star => `
+                  <span style="cursor:pointer; color:#666;" onclick="Purchases.setRating(${star})" id="star-${star}">⭐</span>
+                `).join('')}
+              </div>
+              <div id="rating-text" style="margin-top:8px; font-size:14px; color:var(--muted);">Selecciona las estrellas</div>
+            </div>
+
+            <textarea
+              id="review-text"
+              placeholder="Comparte tu experiencia con este producto... ¿Qué te gustó? ¿Qué mejorarías?"
+              rows="5"
+              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; color:white; margin:12px 0;"
+            ></textarea>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button class="small-btn" onclick="Purchases.closeReviewForm()">Cancelar</button>
+              <button class="btn" onclick="Purchases.submitReview(${purchaseIndex})">Publicar Reseña</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const existingModal = document.getElementById('review-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    document.body.insertAdjacentHTML('beforeend', reviewFormHTML);
+    state.currentRating = 0;
+    this.updateStars(0);
+    document.body.classList.add('body-no-scroll');
+  },
+
+  setRating(rating) {
+    state.currentRating = rating;
+    this.updateStars(rating);
+  },
+
+  updateStars(rating) {
+    const ratingTexts = [
+      "Selecciona las estrellas",
+      "Malo",
+      "Regular",
+      "Bueno",
+      "Muy bueno",
+      "Excelente"
+    ];
+
+    for (let i = 1; i <= 5; i++) {
+      const star = document.getElementById(`star-${i}`);
+      if (star) {
+        star.style.color = i <= rating ? '#FFD700' : '#666';
+      }
+    }
+
+    const ratingText = document.getElementById('rating-text');
+    if (ratingText) {
+      ratingText.textContent = ratingTexts[rating];
+      ratingText.style.color = rating > 0 ? '#FFD700' : 'var(--muted)';
+    }
+  },
+
+  submitReview(purchaseIndex) {
+    const reviewText = document.getElementById('review-text').value.trim();
+
+    if (state.currentRating === 0) {
+      alert('Por favor, selecciona una calificación con estrellas');
+      return;
+    }
+
+    if (!reviewText) {
+      alert('Por favor, escribe tu reseña');
+      return;
+    }
+
+    if (!state.purchases[purchaseIndex].review) {
+      state.purchases[purchaseIndex].review = {};
+    }
+
+    state.purchases[purchaseIndex].review = {
+      rating: state.currentRating,
+      text: reviewText,
+      date: new Date().toLocaleDateString('es-ES')
+    };
+
+    AppStorage.savePurchases();
+    this.closeReviewForm();
+    this.render();
+    Reviews.updateSlider();
+
+    alert('¡Gracias por tu reseña! ✨');
+  },
+
+  editReview(purchaseIndex) {
+    const purchase = state.purchases[purchaseIndex];
+    this.showReviewForm(purchaseIndex);
+
+    setTimeout(() => {
+      if (purchase.review) {
+        state.currentRating = purchase.review.rating;
+        this.updateStars(state.currentRating);
+        document.getElementById('review-text').value = purchase.review.text;
+      }
+    }, 100);
+  },
+
+  closeReviewForm() {
+    const modal = document.getElementById('review-modal');
+    if (modal) {
+      modal.remove();
+    }
     document.body.classList.remove('body-no-scroll');
   }
+};
 
-  hamburgerBtn.addEventListener('click', openSidebar);
-  closeSidebar.addEventListener('click', closeSidebarMenu);
-  sidebarOverlay.addEventListener('click', closeSidebarMenu);
+// =============================================
+// SISTEMA DE RESEÑAS EN INICIO
+// =============================================
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-      closeSidebarMenu();
+const Reviews = {
+  initSlider() {
+    this.renderSlider();
+  },
+
+  getAllReviews() {
+    const defaultReviews = [
+      {text: '"El X-Phone me sorprendió, excelente batería."', rating: 5, emoji: '📱'},
+      {text: '"SpeedBook va genial para clase y trabajo."', rating: 4, emoji: '💻'},
+      {text: '"SoundMax tiene un sonido brutal."', rating: 5, emoji: '🎧'},
+      {text: '"FitTime es cómodo y mide bien el pulso."', rating: 4, emoji: '⌚'}
+    ];
+
+    const userReviews = [];
+    state.purchases.forEach(purchase => {
+      if (purchase.review && purchase.review.text) {
+        userReviews.push({
+          text: purchase.review.text,
+          rating: purchase.review.rating,
+          emoji: '⭐',
+          product: purchase.name
+        });
+      }
+    });
+
+    let allReviews = [...defaultReviews];
+    userReviews.slice(0, 6).forEach(review => {
+      allReviews.push(review);
+    });
+
+    return this.shuffleArray(allReviews);
+  },
+
+  shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-  });
+    return newArray;
+  },
 
-  const sidebarLinks = document.querySelectorAll('.sidebar-link');
-  sidebarLinks.forEach(link => {
-    link.addEventListener('click', closeSidebarMenu);
-  });
-}
+  renderSlider() {
+    const sliderContainer = document.querySelector('.resenas-slider');
+    if (!sliderContainer) return;
 
+    const reviews = this.getAllReviews();
+
+    let reviewsHTML = '';
+    reviews.forEach(review => {
+      const stars = '⭐'.repeat(review.rating);
+      reviewsHTML += `
+        <div class="card">
+          ${review.emoji} ${review.text}<br>${stars}
+          ${review.product ? `<div style="font-size:12px; margin-top:4px; color:var(--muted)">- ${review.product}</div>` : ''}
+        </div>
+      `;
+    });
+
+    sliderContainer.innerHTML = reviewsHTML + reviewsHTML;
+  },
+
+  updateSlider() {
+    if (document.querySelector('.resenas-slider')) {
+      this.renderSlider();
+    }
+  }
+};
+
+// =============================================
+// SISTEMA DE REPARACIONES - COMPLETO
+// =============================================
+
+const Repairs = {
+  init() {
+    this.bindEvents();
+    this.render();
+  },
+
+  bindEvents() {
+    const repairForm = document.getElementById('repair-form');
+    if (repairForm) {
+      repairForm.addEventListener('submit', this.handleSubmit.bind(this));
+    }
+  },
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('repair-name').value;
+    const device = document.getElementById('repair-device').value;
+    const description = document.getElementById('repair-desc').value;
+
+    if (!name || !device || !description) {
+      alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    const repairRequest = {
+      id: Date.now(), // ID único para cada solicitud
+      name: name,
+      device: device,
+      description: description,
+      date: new Date().toLocaleString('es-ES'),
+      status: 'Pendiente'
+    };
+
+    state.repairRequests.push(repairRequest);
+    AppStorage.saveRepairRequests();
+    this.render();
+
+    alert('✅ Solicitud de reparación enviada correctamente');
+    event.target.reset();
+  },
+
+  render() {
+    const container = document.getElementById('repair-list');
+    if (!container) return;
+
+    if (state.repairRequests.length === 0) {
+      container.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
+      return;
+    }
+
+    container.innerHTML = state.repairRequests.map((repair) => `
+      <div class="repair-item" style="margin-bottom: 15px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: var(--glass);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <strong style="font-size: 16px;">${repair.device}</strong>
+            <div class="muted" style="font-size: 14px; margin-top: 4px;">Solicitado por: ${repair.name}</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+              <span class="status-badge" style="background: ${this.getStatusColor(repair.status)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                ${repair.status}
+              </span>
+              <span class="muted" style="font-size: 12px;">${repair.date}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; flex-shrink: 0;">
+            <button class="small-btn" onclick="Repairs.edit(${repair.id})" style="font-size: 12px;">✏️ Editar</button>
+            <button class="small-btn" onclick="Repairs.delete(${repair.id})" style="font-size: 12px;">🗑️ Eliminar</button>
+          </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
+          <strong style="font-size: 14px; color: var(--muted);">Descripción del problema:</strong>
+          <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.4;">${repair.description}</p>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  getStatusColor(status) {
+    const colors = {
+      'Pendiente': '#f59e0b',
+      'En proceso': '#3b82f6',
+      'Completado': '#10b981',
+      'Cancelado': '#ef4444'
+    };
+    return colors[status] || '#6b7280';
+  },
+
+  delete(id) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta solicitud de reparación?')) {
+      state.repairRequests = state.repairRequests.filter(repair => repair.id !== id);
+      AppStorage.saveRepairRequests();
+      this.render();
+      alert('🗑️ Solicitud eliminada correctamente');
+    }
+  },
+
+  edit(id) {
+    console.log('🔧 Editando reparación con ID:', id);
+    const repair = state.repairRequests.find(r => r.id === id);
+
+    if (!repair) {
+      console.error('❌ No se encontró la reparación con ID:', id);
+      alert('No se encontró la solicitud de reparación');
+      return;
+    }
+
+    const editModalHTML = `
+      <div id="edit-repair-modal" class="modal" style="display: block;">
+        <div class="modal-content">
+          <span class="close-modal" id="close-edit-modal">&times;</span>
+          <div class="card">
+            <h3>Editar Solicitud de Reparación</h3>
+
+            <form id="edit-repair-form">
+              <input
+                type="text"
+                id="edit-repair-name"
+                placeholder="Nombre"
+                value="${repair.name.replace(/"/g, '&quot;')}"
+                required
+                style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; margin-bottom: 12px;"
+              >
+              <input
+                type="text"
+                id="edit-repair-device"
+                placeholder="Dispositivo"
+                value="${repair.device.replace(/"/g, '&quot;')}"
+                required
+                style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; margin-bottom: 12px;"
+              >
+              <textarea
+                id="edit-repair-description"
+                placeholder="Descripción del fallo"
+                rows="4"
+                required
+                style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; resize: vertical; margin-bottom: 12px;"
+              >${repair.description.replace(/"/g, '&quot;')}</textarea>
+
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
+                <label style="color: var(--muted); font-size: 14px;">Estado:</label>
+                <select id="edit-repair-status" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px; color: white;">
+                  <option value="Pendiente" ${repair.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="En proceso" ${repair.status === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                  <option value="Completado" ${repair.status === 'Completado' ? 'selected' : ''}>Completado</option>
+                  <option value="Cancelado" ${repair.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+                </select>
+              </div>
+
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button type="button" class="small-btn" id="cancel-edit-btn">Cancelar</button>
+                <button type="submit" class="btn">Guardar Cambios</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Eliminar modal existente si hay uno
+    const existingModal = document.getElementById('edit-repair-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Añadir nuevo modal
+    document.body.insertAdjacentHTML('beforeend', editModalHTML);
+    document.body.classList.add('body-no-scroll');
+
+    // Configurar event listeners
+    const modal = document.getElementById('edit-repair-modal');
+    const closeBtn = document.getElementById('close-edit-modal');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const form = document.getElementById('edit-repair-form');
+
+    // Función para cerrar el modal
+    const closeModal = () => {
+      if (modal) modal.remove();
+      document.body.classList.remove('body-no-scroll');
+    };
+
+    // Event listeners
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.update(id);
+      });
+    }
+
+    console.log('✅ Modal de edición abierto correctamente');
+  },
+
+  update(id) {
+    console.log('🔄 Actualizando reparación con ID:', id);
+
+    const nameInput = document.getElementById('edit-repair-name');
+    const deviceInput = document.getElementById('edit-repair-device');
+    const descriptionInput = document.getElementById('edit-repair-description');
+    const statusSelect = document.getElementById('edit-repair-status');
+
+    if (!nameInput || !deviceInput || !descriptionInput || !statusSelect) {
+      alert('Error: No se pudieron encontrar los campos del formulario');
+      return;
+    }
+
+    const name = nameInput.value;
+    const device = deviceInput.value;
+    const description = descriptionInput.value;
+    const status = statusSelect.value;
+
+    console.log('📝 Nuevos valores:', { name, device, description, status });
+
+    if (!name || !device || !description) {
+      alert('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+
+    const repairIndex = state.repairRequests.findIndex(r => r.id === id);
+    console.log('🔍 Índice encontrado:', repairIndex);
+
+    if (repairIndex !== -1) {
+      state.repairRequests[repairIndex] = {
+        ...state.repairRequests[repairIndex],
+        name: name,
+        device: device,
+        description: description,
+        status: status,
+        date: new Date().toLocaleString('es-ES') // Actualizar fecha de modificación
+      };
+
+      AppStorage.saveRepairRequests();
+      this.render();
+      this.closeEditModal();
+      alert('✅ Solicitud de reparación actualizada correctamente');
+    } else {
+      console.error('❌ No se encontró la reparación para actualizar');
+      alert('Error: No se encontró la solicitud de reparación');
+    }
+  },
+
+  closeEditModal() {
+    console.log('🚪 Cerrando modal de edición');
+    const modal = document.getElementById('edit-repair-modal');
+    if (modal) {
+      modal.remove();
+    }
+    document.body.classList.remove('body-no-scroll');
+  }
+};
 // =============================================
 // INICIALIZACIÓN PRINCIPAL
 // =============================================
@@ -370,866 +1187,48 @@ function initHamburgerMenu() {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Inicializando aplicación...');
 
-  // ORDEN CRÍTICO: menú primero, luego login
-  initHamburgerMenu();
-  initLoginModal();
-  checkLoggedInUser();
+  // Inicializar sistemas en orden
+  Sidebar.init();
+  Auth.init();
+  Cart.init();
+  Products.init();
 
-  // Resto de inicializaciones...
-  if (document.getElementById('product-list')) {
-    renderProducts();
-    initSearch();
-  }
-  if (document.getElementById('cart-contents')) {
-    updateCartUI();
-  }
+  // Inicializar sistemas específicos de página
   if (document.getElementById('purchase-list')) {
-    renderPurchases();
-  }
-  if (document.getElementById('repair-form')) {
-    initRepairPage();
+    Purchases.init();
   }
 
-  updateCartCounter();
+  if (document.getElementById('repair-form')) {
+  Repairs.init();
+}
 
   if (document.querySelector('.resenas-slider')) {
-    renderReviewsSlider();
+    Reviews.initSlider();
   }
 
-  initProductModal();
 
   console.log('✅ Aplicación completamente inicializada');
 });
 
 // =============================================
-// FUNCIONALIDADES DE PRODUCTOS Y CARRITO
-// =============================================
-
-function initSearch() {
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', searchProducts);
-  }
-}
-
-function searchProducts() {
-  const searchInput = document.getElementById('search-input');
-  const searchTerm = searchInput.value.toLowerCase().trim();
-
-  if (!searchTerm) {
-    renderProducts();
-    return;
-  }
-
-  const filteredProducts = PRODUCTS.filter(product =>
-    product.name.toLowerCase().includes(searchTerm) ||
-    product.desc.toLowerCase().includes(searchTerm)
-  );
-
-  renderFilteredProducts(filteredProducts);
-}
-
-function renderFilteredProducts(filteredProducts) {
-  const list = document.getElementById('product-list');
-  if (!list) return;
-
-  list.innerHTML = '';
-
-  if (filteredProducts.length === 0) {
-    list.innerHTML = '<div class="card" style="text-align: center; padding: 40px; grid-column: 1 / -1;">No se encontraron productos que coincidan con tu búsqueda.</div>';
-    return;
-  }
-
-  filteredProducts.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.onclick = () => openProductModal(p.id);
-    div.innerHTML = `
-      <div class="thumb">
-        <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
-      </div>
-      <div class="product-title">${p.name}</div>
-      <div class="muted">${p.desc}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="price">€${p.price}</div>
-        <button class="small-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Comprar</button>
-      </div>`;
-    list.appendChild(div);
-  });
-}
-
-function renderProducts() {
-  const list = document.getElementById('product-list');
-  if (!list) return;
-
-  list.innerHTML = '';
-  PRODUCTS.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.onclick = () => openProductModal(p.id);
-    div.innerHTML = `
-      <div class="thumb">
-        <img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${p.name.split(' ')[0]}'; this.parentElement.style.background='linear-gradient(135deg,#0ea5e9,#7c3aed)'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center';">
-      </div>
-      <div class="product-title">${p.name}</div>
-      <div class="muted">${p.desc}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="price">€${p.price}</div>
-        <button class="small-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Comprar</button>
-      </div>`;
-    list.appendChild(div);
-  });
-}
-
-function updateCartCounter() {
-  const total = cart.reduce((sum,i)=>sum+i.qty,0);
-  const cartBtn = document.getElementById('cart-btn');
-  if (cartBtn) {
-    cartBtn.textContent = `Carrito (${total})`;
-  }
-}
-
-function addToCart(id) {
-  const p = PRODUCTS.find(x => x.id === id);
-  const existing = cart.find(i => i.id === id);
-  if (existing) {
-    existing.qty++;
-  } else {
-    cart.push({id:p.id, name:p.name, price:p.price, qty:1});
-  }
-  saveCart();
-  updateCartUI();
-  updateCartCounter();
-  alert(`¡${p.name} añadido al carrito!`);
-}
-
-function updateCartUI() {
-  updateCartCounter();
-  const cont = document.getElementById('cart-contents');
-  if (!cont) return;
-
-  if (cart.length === 0) {
-    cont.innerHTML = 'Tu carrito está vacío.';
-    return;
-  }
-
-  let html = '';
-  cart.forEach(item => {
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-      <div><strong>${item.name}</strong> <div class="muted">€${item.price} × ${item.qty}</div></div>
-      <div style="display:flex;gap:4px;">
-        <button class="small-btn" onclick="changeQty(${item.id},-1)">-</button>
-        <span style="padding: 0 8px;">${item.qty}</span>
-        <button class="small-btn" onclick="changeQty(${item.id},1)">+</button>
-      </div>
-    </div>`;
-  });
-  const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-  html += `<div style="margin-top:16px; padding:12px; background:var(--glass); border-radius:8px;">
-    <strong>Total: €${total}</strong>
-  </div>
-  <div style="margin-top:16px;">
-    <button class="btn" onclick="checkout()" style="width:100%">Pagar</button>
-  </div>`;
-  cont.innerHTML = html;
-}
-
-function changeQty(id, delta) {
-  const item = cart.find(i => i.id === id);
-  if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) {
-    cart = cart.filter(x => x.id !== id);
-  }
-  saveCart();
-  updateCartUI();
-}
-
-function checkout() {
-  if (cart.length === 0) {
-    alert('El carrito está vacío');
-    return;
-  }
-
-  purchases.push(...cart.map(i => ({...i})));
-  savePurchases();
-
-  alert('¡Compra completada! Gracias por tu compra.');
-  cart = [];
-  saveCart();
-  updateCartUI();
-
-  setTimeout(() => {
-    window.location.href = 'mis-compras.html';
-  }, 1000);
-}
-
-// =============================================
-// SISTEMA DE MODAL DE PRODUCTOS
-// =============================================
-
-function initProductModal() {
-  const modal = document.getElementById('product-modal');
-  const closeBtn = document.querySelector('#product-modal .close-modal');
-  const addToCartBtn = document.getElementById('modal-add-to-cart');
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeProductModal);
-  }
-
-  if (addToCartBtn) {
-    addToCartBtn.addEventListener('click', addToCartFromModal);
-  }
-
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        closeProductModal();
-      }
-    });
-  }
-}
-
-function openProductModal(productId) {
-  const product = PRODUCTS.find(p => p.id === productId);
-  if (!product) return;
-
-  currentProductId = productId;
-
-  const modal = document.getElementById('product-modal');
-  const modalBody = document.getElementById('modal-body');
-
-  if (!modal || !modalBody) return;
-
-  modalBody.innerHTML = `
-    <div class="modal-product-content">
-      <img src="${product.image}" alt="${product.name}" class="modal-product-image"
-           onerror="this.style.display='none';">
-      <div class="modal-product-image-placeholder" style="display:${product.image ? 'none' : 'flex'};">
-        ${product.name.split(' ')[0]}
-      </div>
-
-      <div class="modal-product-title">${product.name}</div>
-      <div class="modal-product-price">€${product.price}</div>
-      <div class="modal-product-desc">${product.desc}</div>
-
-      ${product.specs ? `
-        <div class="modal-product-specs">
-          <h4>Especificaciones técnicas:</h4>
-          <div class="specs-list">
-            ${product.specs.map(spec => `<div class="spec-item">${spec}</div>`).join('')}
-          </div>
-        </div>
-      ` : ''}
-    </div>
-  `;
-
-  modal.style.display = 'block';
-  document.body.classList.add('body-no-scroll');
-}
-
-function closeProductModal() {
-  const modal = document.getElementById('product-modal');
-  if (modal) {
-    modal.style.display = 'none';
-    document.body.classList.remove('body-no-scroll');
-  }
-  currentProductId = null;
-}
-
-function addToCartFromModal() {
-  if (currentProductId) {
-    addToCart(currentProductId);
-    closeProductModal();
-  }
-}
-
-// =============================================
-// SISTEMA DE COMPRAS Y RESEÑAS
-// =============================================
-
-function renderPurchases() {
-  const list = document.getElementById('purchase-list');
-  if (!list) return;
-
-  purchases = JSON.parse(localStorage.getItem('purchases')) || [];
-
-  if (purchases.length === 0) {
-    list.innerHTML = 'Aún no has comprado nada.';
-    return;
-  }
-
-  list.innerHTML = purchases.map((p, index) => {
-    const hasReview = p.review && p.review.text;
-    return `
-    <div class="purchase-item" style="margin-bottom:20px; padding:16px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; background:var(--glass);">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div style="display:flex; gap: 12px; align-items: flex-start;">
-          <div>
-            <strong style="font-size:16px;">${p.name}</strong>
-            <div class="muted">€${p.price} × ${p.qty} | Total: €${p.price * p.qty}</div>
-            ${hasReview ? `
-              <div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">
-                <div><strong>Tu reseña:</strong> ${p.review.rating}⭐</div>
-                <div class="muted">"${p.review.text}"</div>
-                <small class="muted">${p.review.date || 'Sin fecha'}</small>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-        <div>
-          ${!hasReview ?
-            `<button class="small-btn" onclick="showReviewForm(${index})" style="margin-left:8px;">✍️ Añadir Reseña</button>` :
-            `<button class="small-btn" onclick="editReview(${index})" style="margin-left:8px;">📝 Editar Reseña</button>`
-          }
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function showReviewForm(purchaseIndex) {
-  const purchase = purchases[purchaseIndex];
-
-  const reviewFormHTML = `
-    <div id="review-modal" class="modal">
-      <div class="modal-content">
-        <span class="close-modal" onclick="closeReviewForm()">&times;</span>
-        <div class="card">
-          <h3>Escribe tu reseña para ${purchase.name}</h3>
-
-          <div style="margin:16px 0; text-align:center;">
-            <div style="font-size:14px; margin-bottom:8px; color:var(--muted);">Calificación:</div>
-            <div id="rating-stars" style="display:flex; justify-content:center; gap:8px; font-size:24px;">
-              ${[1,2,3,4,5].map(star => `
-                <span style="cursor:pointer; color:#666;" onclick="setRating(${star})" id="star-${star}">⭐</span>
-              `).join('')}
-            </div>
-            <div id="rating-text" style="margin-top:8px; font-size:14px; color:var(--muted);">Selecciona las estrellas</div>
-          </div>
-
-          <textarea
-            id="review-text"
-            placeholder="Comparte tu experiencia con este producto... ¿Qué te gustó? ¿Qué mejorarías?"
-            rows="5"
-            style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; color:white; margin:12px 0;"
-          ></textarea>
-
-          <div style="display:flex; gap:8px; justify-content:flex-end;">
-            <button class="small-btn" onclick="closeReviewForm()">Cancelar</button>
-            <button class="btn" onclick="submitReview(${purchaseIndex})">Publicar Reseña</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const existingModal = document.getElementById('review-modal');
-  if (existingModal) {
-    existingModal.remove();
-  }
-
-  document.body.insertAdjacentHTML('beforeend', reviewFormHTML);
-  currentRating = 0;
-  updateStars(0);
-  document.body.classList.add('body-no-scroll');
-}
-
-function setRating(rating) {
-  currentRating = rating;
-  updateStars(rating);
-}
-
-function updateStars(rating) {
-  const ratingTexts = [
-    "Selecciona las estrellas",
-    "Malo",
-    "Regular",
-    "Bueno",
-    "Muy bueno",
-    "Excelente"
-  ];
-
-  for (let i = 1; i <= 5; i++) {
-    const star = document.getElementById(`star-${i}`);
-    if (star) {
-      star.style.color = i <= rating ? '#FFD700' : '#666';
-    }
-  }
-
-  const ratingText = document.getElementById('rating-text');
-  if (ratingText) {
-    ratingText.textContent = ratingTexts[rating];
-    ratingText.style.color = rating > 0 ? '#FFD700' : 'var(--muted)';
-  }
-}
-
-function submitReview(purchaseIndex) {
-  const reviewText = document.getElementById('review-text').value.trim();
-
-  if (currentRating === 0) {
-    alert('Por favor, selecciona una calificación con estrellas');
-    return;
-  }
-
-  if (!reviewText) {
-    alert('Por favor, escribe tu reseña');
-    return;
-  }
-
-  if (!purchases[purchaseIndex].review) {
-    purchases[purchaseIndex].review = {};
-  }
-
-  purchases[purchaseIndex].review = {
-    rating: currentRating,
-    text: reviewText,
-    date: new Date().toLocaleDateString('es-ES')
-  };
-
-  savePurchases();
-  closeReviewForm();
-  renderPurchases();
-  updateReviewsSlider();
-
-  alert('¡Gracias por tu reseña! ✨');
-}
-
-function editReview(purchaseIndex) {
-  const purchase = purchases[purchaseIndex];
-  showReviewForm(purchaseIndex);
-
-  setTimeout(() => {
-    if (purchase.review) {
-      currentRating = purchase.review.rating;
-      updateStars(currentRating);
-      document.getElementById('review-text').value = purchase.review.text;
-    }
-  }, 100);
-}
-
-function closeReviewForm() {
-  const modal = document.getElementById('review-modal');
-  if (modal) {
-    modal.remove();
-  }
-  document.body.classList.remove('body-no-scroll');
-}
-
-// =============================================
-// SISTEMA DE RESEÑAS EN INICIO
-// =============================================
-
-function getAllReviews() {
-  const defaultReviews = [
-    {text: '"El X-Phone me sorprendió, excelente batería."', rating: 5, emoji: '📱'},
-    {text: '"SpeedBook va genial para clase y trabajo."', rating: 4, emoji: '💻'},
-    {text: '"SoundMax tiene un sonido brutal."', rating: 5, emoji: '🎧'},
-    {text: '"FitTime es cómodo y mide bien el pulso."', rating: 4, emoji: '⌚'}
-  ];
-
-  const userReviews = [];
-  const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
-
-  purchases.forEach(purchase => {
-    if (purchase.review && purchase.review.text) {
-      userReviews.push({
-        text: purchase.review.text,
-        rating: purchase.review.rating,
-        emoji: '⭐',
-        product: purchase.name
-      });
-    }
-  });
-
-  let allReviews = [...defaultReviews];
-  userReviews.slice(0, 6).forEach(review => {
-    allReviews.push(review);
-  });
-
-  return shuffleArray(allReviews);
-}
-
-function shuffleArray(array) {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-}
-
-function renderReviewsSlider() {
-  const sliderContainer = document.querySelector('.resenas-slider');
-  if (!sliderContainer) return;
-
-  const reviews = getAllReviews();
-
-  let reviewsHTML = '';
-  reviews.forEach(review => {
-    const stars = '⭐'.repeat(review.rating);
-    reviewsHTML += `
-      <div class="card">
-        ${review.emoji} ${review.text}<br>${stars}
-        ${review.product ? `<div style="font-size:12px; margin-top:4px; color:var(--muted)">- ${review.product}</div>` : ''}
-      </div>
-    `;
-  });
-
-  sliderContainer.innerHTML = reviewsHTML + reviewsHTML;
-}
-
-function updateReviewsSlider() {
-  if (document.querySelector('.resenas-slider')) {
-    renderReviewsSlider();
-  }
-}
-
-// =============================================
-// SISTEMA DE REPARACIONES
-// =============================================
-
-function initRepairPage() {
-  const repairForm = document.getElementById('repair-form');
-  if (repairForm) {
-    repairForm.addEventListener('submit', handleRepairSubmit);
-  }
-  renderRepairRequests();
-}
-
-function handleRepairSubmit(event) {
-  event.preventDefault();
-
-  const name = document.getElementById('repair-name').value;
-  const device = document.getElementById('repair-device').value;
-  const description = document.getElementById('repair-desc').value;
-
-  const repairRequest = {
-    id: Date.now(),
-    name: name,
-    device: device,
-    description: description,
-    date: new Date().toLocaleDateString('es-ES'),
-    status: 'Pendiente'
-  };
-
-  repairRequests.push(repairRequest);
-  saveRepairRequests();
-  renderRepairRequests();
-
-  alert('✅ Solicitud de reparación enviada correctamente');
-  event.target.reset();
-}
-
-function renderRepairRequests() {
-  const container = document.getElementById('repair-list');
-  if (!container) return;
-
-  if (repairRequests.length === 0) {
-    container.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
-    return;
-  }
-
-  container.innerHTML = repairRequests.map((repair, index) => `
-    <div class="repair-item" style="margin-bottom: 15px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: var(--glass);">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        <div style="flex: 1;">
-          <strong style="font-size: 16px;">${repair.device}</strong>
-          <div class="muted" style="font-size: 14px; margin-top: 4px;">Solicitado por: ${repair.name}</div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-            <span class="status-badge" style="background: ${getStatusColor(repair.status)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
-              ${repair.status}
-            </span>
-            <span class="muted" style="font-size: 12px;">${repair.date}</span>
-          </div>
-        </div>
-        <div style="display: flex; gap: 6px; flex-shrink: 0;">
-          <button class="small-btn" onclick="editRepairRequest(${repair.id})" style="font-size: 12px;">✏️ Editar</button>
-          <button class="small-btn" onclick="deleteRepairRequest(${repair.id})" style="font-size: 12px;">🗑️ Eliminar</button>
-        </div>
-      </div>
-      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
-        <strong style="font-size: 14px; color: var(--muted);">Descripción del problema:</strong>
-        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.4;">${repair.description}</p>
-      </div>
-    </div>
-  `).join('');
-}
-
-function getStatusColor(status) {
-  const colors = {
-    'Pendiente': '#f59e0b',
-    'En proceso': '#3b82f6',
-    'Completado': '#10b981',
-    'Cancelado': '#ef4444'
-  };
-  return colors[status] || '#6b7280';
-}
-
-function deleteRepairRequest(id) {
-  if (confirm('¿Estás seguro de que quieres eliminar esta solicitud de reparación?')) {
-    repairRequests = repairRequests.filter(repair => repair.id !== id);
-    saveRepairRequests();
-    renderRepairRequests();
-  }
-}
-
-function editRepairRequest(id) {
-  const repair = repairRequests.find(r => r.id === id);
-  if (!repair) return;
-
-  const editModalHTML = `
-    <div id="edit-repair-modal" class="modal">
-      <div class="modal-content">
-        <span class="close-modal" onclick="closeEditRepairModal()">&times;</span>
-        <div class="card">
-          <h3>Editar Solicitud de Reparación</h3>
-
-          <form id="edit-repair-form" style="display: flex; flex-direction: column; gap: 12px;">
-            <input
-              type="text"
-              placeholder="Nombre"
-              value="${repair.name}"
-              required
-              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
-            >
-            <input
-              type="text"
-              placeholder="Dispositivo"
-              value="${repair.device}"
-              required
-              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white;"
-            >
-            <textarea
-              placeholder="Descripción del fallo"
-              rows="4"
-              required
-              style="width:100%; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; color:white; resize: vertical;"
-            >${repair.description}</textarea>
-
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <label style="color: var(--muted); font-size: 14px;">Estado:</label>
-              <select id="edit-repair-status" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px; color: white;">
-                <option value="Pendiente" ${repair.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                <option value="En proceso" ${repair.status === 'En proceso' ? 'selected' : ''}>En proceso</option>
-                <option value="Completado" ${repair.status === 'Completado' ? 'selected' : ''}>Completado</option>
-                <option value="Cancelado" ${repair.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
-              </select>
-            </div>
-
-            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top: 16px;">
-              <button type="button" class="small-btn" onclick="closeEditRepairModal()">Cancelar</button>
-              <button type="submit" class="btn">Guardar Cambios</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const existingModal = document.getElementById('edit-repair-modal');
-  if (existingModal) {
-    existingModal.remove();
-  }
-
-  document.body.insertAdjacentHTML('beforeend', editModalHTML);
-  document.body.classList.add('body-no-scroll');
-
-  document.getElementById('edit-repair-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    updateRepairRequest(id);
-  });
-}
-
-function updateRepairRequest(id) {
-  const form = document.getElementById('edit-repair-form');
-  const name = form.querySelector('input[placeholder="Nombre"]').value;
-  const device = form.querySelector('input[placeholder="Dispositivo"]').value;
-  const description = form.querySelector('textarea').value;
-  const status = document.getElementById('edit-repair-status').value;
-
-  const repairIndex = repairRequests.findIndex(r => r.id === id);
-  if (repairIndex !== -1) {
-    repairRequests[repairIndex] = {
-      ...repairRequests[repairIndex],
-      name: name,
-      device: device,
-      description: description,
-      status: status
-    };
-
-    saveRepairRequests();
-    renderRepairRequests();
-    closeEditRepairModal();
-    alert('✅ Solicitud de reparación actualizada correctamente');
-  }
-}
-
-function closeEditRepairModal() {
-  const modal = document.getElementById('edit-repair-modal');
-  if (modal) {
-    modal.remove();
-  }
-  document.body.classList.remove('body-no-scroll');
-}
-
-// =============================================
-// MANEJO DE TECLA ESC
+// MANEJO DE TECLA ESC PARA TODOS LOS MODALES
 // =============================================
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    closeReviewForm();
-    closeEditRepairModal();
-    closeProductModal();
-    closeLoginModalFunc();
+    Auth.closeModal();
+    Products.closeModal();
+
+    // Cerrar modales de reseñas
+    const reviewModal = document.getElementById('review-modal');
+    if (reviewModal) {
+      Purchases.closeReviewForm();
+    }
+
+    // Cerrar modales de reparaciones
+    const repairModal = document.getElementById('edit-repair-modal');
+    if (repairModal) {
+      Repairs.closeEditModal();
+    }
   }
 });
-// =============================================
-// SISTEMA DE INICIO DE SESIÓN - CORREGIDO
-// =============================================
-
-function initLoginModal() {
-  console.log('🔧 Inicializando modal de login...');
-
-  const loginSidebarLink = document.getElementById('login-sidebar-link');
-  const loginModal = document.getElementById('login-modal');
-  const closeLoginModal = document.getElementById('close-login-modal');
-  const loginForm = document.getElementById('login-form');
-  const loginBtn = document.getElementById('login-btn');
-
-  console.log('Elementos encontrados:', {
-    loginSidebarLink: !!loginSidebarLink,
-    loginModal: !!loginModal,
-    closeLoginModal: !!closeLoginModal,
-    loginForm: !!loginForm,
-    loginBtn: !!loginBtn
-  });
-
-  if (!loginSidebarLink || !loginModal) {
-    console.error('❌ Elementos esenciales del login no encontrados');
-    return;
-  }
-
-  // ABRIR MODAL DE LOGIN
-  loginSidebarLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('👉 Clic en login-sidebar-link detectado');
-
-    // Cerrar el menú lateral primero
-    closeSidebarMenu();
-
-    // Pequeño delay para asegurar que el menú se cierre
-    setTimeout(() => {
-      console.log('🔄 Abriendo modal de login...');
-      openLoginModal();
-    }, 50);
-  });
-
-  // CERRAR MODAL
-  if (closeLoginModal) {
-    closeLoginModal.addEventListener('click', function(e) {
-      e.preventDefault();
-      closeLoginModalFunc();
-    });
-  }
-
-  // CERRAR AL HACER CLIC FUERA
-  loginModal.addEventListener('click', function(e) {
-    if (e.target === loginModal) {
-      closeLoginModalFunc();
-    }
-  });
-
-  // FORMULARIO DE REGISTRO
-  if (loginForm) {
-    loginForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      handleRegistration();
-    });
-  }
-
-  // BOTÓN DE INICIO DE SESIÓN - CORREGIDO
-  if (loginBtn) {
-    loginBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('🔄 Botón de inicio de sesión clickeado');
-      handleLogin();
-    });
-  }
-
-  console.log('✅ Modal de login inicializado correctamente');
-}
-
-function handleLogin() {
-  console.log('🔄 Ejecutando handleLogin...');
-
-  const email = document.getElementById('login-email')?.value;
-  const password = document.getElementById('login-password')?.value;
-
-  if (!email || !password) {
-    alert('Por favor, completa email y contraseña.');
-    return;
-  }
-
-  const storedUserData = localStorage.getItem('userData');
-
-  if (!storedUserData) {
-    alert('No hay usuarios registrados. Por favor, regístrate primero.');
-    return;
-  }
-
-  const userData = JSON.parse(storedUserData);
-
-  if (userData.email === email && userData.password === password) {
-    closeLoginModalFunc();
-    alert('¡Inicio de sesión exitoso! Bienvenido de nuevo ' + userData.name);
-    updateLoginUI(userData.name);
-  } else {
-    alert('Correo electrónico o contraseña incorrectos.');
-  }
-}
-
-function handleRegistration() {
-  console.log('🔄 Ejecutando handleRegistration...');
-
-  const email = document.getElementById('login-email')?.value;
-  const name = document.getElementById('login-name')?.value;
-  const password = document.getElementById('login-password')?.value;
-
-  if (!email || !name || !password) {
-    alert('Por favor, completa todos los campos.');
-    return;
-  }
-
-  if (!isValidEmail(email)) {
-    alert('Por favor, introduce un correo electrónico válido.');
-    return;
-  }
-
-  const userData = {
-    email: email,
-    name: name,
-    password: password,
-    registrationDate: new Date().toLocaleString('es-ES')
-  };
-
-  localStorage.setItem('userData', JSON.stringify(userData));
-  closeLoginModalFunc();
-  alert('¡Registro exitoso! Bienvenido ' + name);
-  updateLoginUI(name);
-}
-
-// Asegurar que la función closeSidebarMenu esté disponible globalmente
-function closeSidebarMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-  if (sidebar && sidebarOverlay) {
-    sidebar.classList.remove('active');
-    sidebarOverlay.classList.remove('active');
-    document.body.classList.remove('body-no-scroll');
-  }
-}

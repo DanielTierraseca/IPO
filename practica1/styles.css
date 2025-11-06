@@ -1119,3 +1119,84 @@ main {
 #login-modal .modal-content {
   margin-top: 10vh; /* Reducir margen superior para que no quede tapado por el header */
 }
+
+/* ============================================= */
+/* ESTILOS MEJORADOS PARA EL ESTADO DE USUARIO */
+/* ============================================= */
+
+/* Estado cuando el usuario está logueado */
+#login-sidebar-link[style*="background: rgba(59, 130, 246, 0.1)"] {
+  border-left: 3px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.15) !important;
+  transition: all 0.3s ease;
+}
+
+#login-sidebar-link[style*="background: rgba(59, 130, 246, 0.1)"]:hover {
+  background: rgba(59, 130, 246, 0.25) !important;
+  transform: translateX(5px);
+}
+
+/* Estado normal (iniciar sesión) */
+#login-sidebar-link[style*="background: rgba(110, 231, 183, 0.1)"] {
+  border-left: 3px solid var(--accent);
+  background: rgba(110, 231, 183, 0.15) !important;
+  transition: all 0.3s ease;
+}
+
+#login-sidebar-link[style*="background: rgba(110, 231, 183, 0.1)"]:hover {
+  background: rgba(110, 231, 183, 0.25) !important;
+  transform: translateX(5px);
+}
+
+/* Mejora visual para el texto del usuario logueado */
+#login-sidebar-link div {
+  transition: all 0.3s ease;
+}
+
+#login-sidebar-link:hover div {
+  transform: scale(1.02);
+}
+
+/* ============================================= */
+/* ESTILOS MEJORADOS PARA BOTONES DEL MODAL LOGIN */
+/* ============================================= */
+
+#login-btn {
+  position: relative;
+  z-index: 10;
+  cursor: pointer !important;
+}
+
+#login-btn:active {
+  transform: scale(0.98);
+}
+
+/* Asegurar que los botones sean clickeables */
+.form-buttons .btn,
+.form-buttons .small-btn {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+}
+
+/* Prevenir que otros elementos interfieran */
+#login-modal * {
+  pointer-events: auto;
+}
+
+#login-modal .modal-content {
+  pointer-events: auto !important;
+}
+
+/* Estilos específicos para el estado del botón */
+#login-btn:hover {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: var(--accent) !important;
+  transform: translateY(-2px);
+}
+
+#login-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

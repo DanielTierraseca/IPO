@@ -76,16 +76,42 @@
   <div class="modal-content">
     <span class="close-modal" id="close-login-modal">&times;</span>
     <div id="login-modal-body">
-      <h2>Iniciar Sesión / Registro</h2>
+      <h2>💻 ElectroInformatic</h2>
+      <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;">
+        Únete a nuestra comunidad de expertos
+      </p>
+
       <form id="login-form">
         <input type="email" id="login-email" placeholder="📧 Correo electrónico" required>
         <input type="text" id="login-name" placeholder="👤 Nombre completo" required>
         <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin: 15px 0;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="color: var(--accent);">💡</span>
+            <small style="color: var(--muted); font-size: 12px;">
+              <strong>Para registrarte:</strong> Completa todos los campos
+            </small>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--accent);">🔑</span>
+            <small style="color: var(--muted); font-size: 12px;">
+              <strong>Para iniciar sesión:</strong> Solo email y contraseña
+            </small>
+          </div>
+        </div>
+
         <div class="form-buttons">
-          <button class="btn" type="submit">Registrarse</button>
-          <button class="small-btn" type="button" id="login-btn">Iniciar Sesión</button>
+          <button class="btn" type="submit">📝 Registrarse</button>
+          <button class="small-btn" type="button" id="login-btn">🚀 Iniciar Sesión</button>
         </div>
       </form>
+
+      <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <small style="color: var(--muted); font-size: 12px;">
+          Al registrarte aceptas nuestros términos y condiciones
+        </small>
+      </div>
     </div>
   </div>
 </div>
