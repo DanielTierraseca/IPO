@@ -407,10 +407,11 @@ const Sidebar = {
 // SISTEMA DE CARRITO
 // =============================================
 
+
 const Cart = {
   init() {
     this.updateCounter();
-    // También actualizar UI si estamos en la página del carrito
+    // Si estamos en la página del carrito, actualizamos la UI
     if (document.getElementById('cart-contents')) {
       this.updateUI();
     }
@@ -510,16 +511,178 @@ const Cart = {
   },
 
   checkout() {
+    this.showPaymentModal();
+  },
+
+  showPaymentModal() {
     if (state.cart.length === 0) {
       alert('El carrito está vacío');
       return;
     }
 
+    // Calcular total
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+    // Actualizar resumen
+    this.updatePaymentSummary();
+    document.getElementById('payment-total').textContent = `€${total}`;
+
+    // Generar número de pedido aleatorio
+    document.getElementById('order-number').textContent = Math.floor(100000 + Math.random() * 900000);
+
+    // Mostrar modal
+    const paymentModal = document.getElementById('payment-modal');
+    paymentModal.style.display = 'block';
+    document.body.classList.add('body-no-scroll');
+
+    // Vincular eventos del modal de pago
+    this.bindPaymentModalEvents();
+  },
+
+  updatePaymentSummary() {
+    const summaryElement = document.getElementById('payment-summary');
+    let summaryHTML = '';
+
+    state.cart.forEach(item => {
+      summaryHTML += `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+          <span>${item.name} (x${item.qty})</span>
+          <span>€${item.price * item.qty}</span>
+        </div>
+      `;
+    });
+
+    summaryElement.innerHTML = summaryHTML;
+  },
+
+  bindPaymentModalEvents() {
+    const paymentModal = document.getElementById('payment-modal');
+    const closeBtn = document.getElementById('close-payment-modal');
+    const cancelBtn = document.getElementById('cancel-payment');
+    const paymentForm = document.getElementById('payment-form');
+    const paymentMethod = document.getElementById('payment-method');
+
+    // Cerrar modal
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.closePaymentModal();
+      });
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.closePaymentModal();
+      });
+    }
+
+    // Cambiar campos según método de pago
+    if (paymentMethod) {
+      paymentMethod.addEventListener('change', (e) => {
+        this.togglePaymentFields(e.target.value);
+      });
+    }
+
+    // Enviar formulario
+    if (paymentForm) {
+      paymentForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.processPayment();
+      });
+    }
+
+    // Cerrar al hacer clic fuera
+    if (paymentModal) {
+      paymentModal.addEventListener('click', (e) => {
+        if (e.target === paymentModal) {
+          this.closePaymentModal();
+        }
+      });
+    }
+  },
+
+  togglePaymentFields(method) {
+    const cardFields = document.getElementById('card-fields');
+    const paypalFields = document.getElementById('paypal-fields');
+    const transferFields = document.getElementById('transfer-fields');
+
+    // Ocultar todos primero
+    cardFields.style.display = 'none';
+    paypalFields.style.display = 'none';
+    transferFields.style.display = 'none';
+
+    // Mostrar los campos correspondientes
+    switch(method) {
+      case 'credit':
+      case 'debit':
+        cardFields.style.display = 'block';
+        break;
+      case 'paypal':
+        paypalFields.style.display = 'block';
+        break;
+      case 'transfer':
+        transferFields.style.display = 'block';
+        break;
+    }
+  },
+
+  processPayment() {
+    // Validaciones básicas
+    const email = document.getElementById('payment-email').value;
+    const termsAccepted = document.getElementById('terms-accepted').checked;
+    const paymentMethod = document.getElementById('payment-method').value;
+
+    if (!email) {
+      alert('Por favor, introduce tu correo electrónico');
+      return;
+    }
+
+    if (!termsAccepted) {
+      alert('Debes aceptar los términos y condiciones');
+      return;
+    }
+
+    // Validaciones específicas por método de pago
+    if (paymentMethod === 'credit' || paymentMethod === 'debit') {
+      const cardNumber = document.getElementById('card-number').value;
+      const cardExpiry = document.getElementById('card-expiry').value;
+      const cardCVV = document.getElementById('card-cvv').value;
+      const cardName = document.getElementById('card-name').value;
+
+      if (!cardNumber || !cardExpiry || !cardCVV || !cardName) {
+        alert('Por favor, completa todos los datos de la tarjeta');
+        return;
+      }
+
+      // Validación simple de tarjeta (solo para demo)
+      if (cardNumber.replace(/\s/g, '').length !== 16) {
+        alert('El número de tarjeta debe tener 16 dígitos');
+        return;
+      }
+    }
+
+    // Simular procesamiento de pago
+    this.showPaymentProcessing();
+  },
+
+  showPaymentProcessing() {
+    // Mostrar estado de procesamiento
+    const confirmBtn = document.getElementById('confirm-payment');
+    const originalText = confirmBtn.textContent;
+    confirmBtn.textContent = 'Procesando...';
+    confirmBtn.disabled = true;
+
+    // Simular delay de procesamiento
+    setTimeout(() => {
+      this.completePurchase();
+      confirmBtn.textContent = originalText;
+      confirmBtn.disabled = false;
+    }, 2000);
+  },
+
+  completePurchase() {
     // Agregar a compras
     state.purchases.push(...state.cart.map(item => ({...item})));
     AppStorage.savePurchases();
-
-    alert('¡Compra completada! Gracias por tu compra.');
 
     // Limpiar carrito
     state.cart = [];
@@ -527,10 +690,24 @@ const Cart = {
     this.updateUI();
     this.updateCounter();
 
+    // Cerrar modal de pago
+    this.closePaymentModal();
+
+    // Mostrar confirmación
+    alert('¡Pago completado! Gracias por tu compra. ✨');
+
     // Redirigir a mis compras
     setTimeout(() => {
       window.location.href = 'mis-compras.html';
-    }, 1000);
+    }, 1500);
+  },
+
+  closePaymentModal() {
+    const paymentModal = document.getElementById('payment-modal');
+    if (paymentModal) {
+      paymentModal.style.display = 'none';
+      document.body.classList.remove('body-no-scroll');
+    }
   }
 };
 

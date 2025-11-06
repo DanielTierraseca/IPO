@@ -96,6 +96,92 @@
 </div>
 
   <script src="script.js"></script>
+<!-- Modal de Pago -->
+<div id="payment-modal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" id="close-payment-modal">&times;</span>
+    <div class="card">
+      <h2>💳 Finalizar Compra</h2>
 
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 10px 0;">Resumen del Pedido</h4>
+        <div id="payment-summary"></div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
+          <strong>Total: <span id="payment-total">€0</span></strong>
+        </div>
+      </div>
+
+      <form id="payment-form">
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; color: var(--muted);">Método de Pago</label>
+          <select id="payment-method" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+            <option value="credit">💳 Tarjeta de Crédito</option>
+            <option value="debit">💳 Tarjeta de Débito</option>
+            <option value="paypal">💰 PayPal</option>
+            <option value="transfer">🏦 Transferencia Bancaria</option>
+          </select>
+        </div>
+
+        <!-- Campos para tarjeta (visibles por defecto) -->
+        <div id="card-fields">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: var(--muted);">Número de Tarjeta</label>
+            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 5px; color: var(--muted);">Fecha de Expiración</label>
+              <input type="text" id="card-expiry" placeholder="MM/AA" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 5px; color: var(--muted);">CVV</label>
+              <input type="text" id="card-cvv" placeholder="123" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: var(--muted);">Nombre del Titular</label>
+            <input type="text" id="card-name" placeholder="JUAN PEREZ" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+          </div>
+        </div>
+
+        <!-- Campos para PayPal (ocultos por defecto) -->
+        <div id="paypal-fields" style="display: none;">
+          <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; color: var(--muted);">Serás redirigido a PayPal para completar el pago</p>
+          </div>
+        </div>
+
+        <!-- Campos para transferencia (ocultos por defecto) -->
+        <div id="transfer-fields" style="display: none;">
+          <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0; color: var(--muted);">Datos para transferencia:</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>IBAN:</strong> ES12 3456 7890 1234 5678 9012</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Beneficiario:</strong> ElectroInformatic SL</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Concepto:</strong> Pedido #<span id="order-number"></span></p>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; color: var(--muted);">Correo Electrónico</label>
+          <input type="email" id="payment-email" placeholder="tu@email.com" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 8px; color: var(--muted);">
+            <input type="checkbox" id="terms-accepted" style="transform: scale(1.2);">
+            Acepto los <a href="#" style="color: var(--accent);">términos y condiciones</a>
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="small-btn" id="cancel-payment">Cancelar</button>
+          <button type="submit" class="btn" id="confirm-payment">Pagar Ahora</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 </body>
 </html>
