@@ -3,57 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ElectroInformatic — Comprar</title>
+  <title data-i18n="page.title.shop">ElectroInformatic — Comprar</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-  <div class="brand">
-    <div class="logo">!e¡</div>
-    <div>
-      <div style="font-weight:800">ElectroInformatic</div>
-      <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
+    <div class="brand">
+      <div class="logo">!e¡</div>
+      <div>
+        <div style="font-weight:800" data-i18n="header.brand">ElectroInformatic</div>
+        <div style="font-size:12px;color:var(--muted)" data-i18n="header.tagline">Dispositivos electrónicos</div>
+      </div>
     </div>
-  </div>
 
-  <div class="header-actions">
-    <!-- Carrito siempre visible -->
-    <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn">Carrito (0)</a>
+    <div class="header-actions">
+      <!-- Botón de ajustes -->
+      <button class="nav-btn" id="settings-btn" data-i18n="header.settings">⚙️</button>
 
-    <!-- Botón hamburguesa -->
-    <button class="hamburger-btn" id="hamburger-btn">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-  </div>
-</header>
+      <!-- Carrito siempre visible -->
+      <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn" data-i18n="header.cart">Carrito (0)</a>
 
-<!-- Menú lateral -->
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
-<aside class="sidebar" id="sidebar">
-  <button class="close-sidebar" id="close-sidebar">&times;</button>
-  <nav class="sidebar-nav">
-    <a href="index.html" class="sidebar-link">Inicio</a>
-    <a href="comprar.html" class="sidebar-link">Comprar</a>
-    <a href="reparar.html" class="sidebar-link">Reparar</a>
-    <a href="mis-compras.html" class="sidebar-link">Mis Compras</a>
-    <a href="#" class="sidebar-link" id="login-sidebar-link">Iniciar Sesión</a>
-  </nav>
-</aside>
+      <a href="ofertas.html" class="nav-btn offer-btn" id="offer-btn">🎁 <span data-i18n="header.nav.offers">Ofertas</span></a>
+
+  <button class="theme-toggle-btn" id="theme-toggle-btn" title="Cambiar tema">🌓</button>
+
+      <!-- Botón hamburguesa -->
+      <button class="hamburger-btn" id="hamburger-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Menú lateral -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <button class="close-sidebar" id="close-sidebar">&times;</button>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link" data-i18n="nav.home">Inicio</a>
+      <a href="comprar.html" class="sidebar-link" data-i18n="nav.shop">Comprar</a>
+      <a href="ofertas.html" class="sidebar-link" data-i18n="header.nav.offers">Ofertas</a>
+      <a href="reparar.html" class="sidebar-link" data-i18n="nav.repair">Reparar</a>
+      <a href="mis-compras.html" class="sidebar-link" data-i18n="nav.purchases">Mis Compras</a>
+      <a href="#" class="sidebar-link" id="login-sidebar-link" data-i18n="nav.login">Iniciar Sesión</a>
+    </nav>
+  </aside>
 
   <main>
-    <h2>Comprar</h2>
-    <p class="muted">Haz clic en cualquier producto para ver detalles y añadir al carrito.</p>
+    <h2 data-i18n="shop.title">Comprar</h2>
+    <p class="muted" data-i18n="shop.subtitle">Haz clic en cualquier producto para ver detalles y añadir al carrito.</p>
     <div style="margin-bottom: 20px;">
-    <input
-      type="text"
-      id="search-input"
-      placeholder="🔍 Buscar dispositivo..."
-      style="width: 100%; max-width: 400px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: var(--card); color: white; font-size: 14px;"
-    >
-  </div>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="🔍 Buscar dispositivo..."
+        data-i18n-placeholder="shop.search"
+        style="width: 100%; max-width: 400px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: var(--card); color: white; font-size: 14px;"
+      >
+    </div>
 
     <div id="product-list" class="grid"></div>
 
@@ -63,58 +72,209 @@
         <span class="close-modal">&times;</span>
         <div id="modal-body"></div>
         <div class="modal-buttons">
-          <button class="btn" id="modal-add-to-cart">Añadir al Carrito</button>
+          <button class="btn" id="modal-add-to-cart" data-i18n="shop.modal.add">Añadir al Carrito</button>
         </div>
       </div>
     </div>
 
-    <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
+    <footer data-i18n="footer.text">✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
   </main>
 
-<!-- Modal de Inicio de Sesión -->
-<div id="login-modal" class="modal">
+  <!-- Modal de Inicio de Sesión -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-login-modal">&times;</span>
+      <div id="login-modal-body">
+        <h2 data-i18n="login.title">💻 ElectroInformatic</h2>
+        <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;" data-i18n="login.subtitle">
+          Únete a nuestra comunidad de expertos
+        </p>
+
+        <form id="login-form">
+          <input type="email" id="login-email" placeholder="📧 Correo electrónico" data-i18n-placeholder="login.email" required>
+          <input type="text" id="login-name" placeholder="👤 Nombre completo" data-i18n-placeholder="login.name" required>
+          <input type="password" id="login-password" placeholder="🔒 Contraseña" data-i18n-placeholder="login.password" required>
+
+          <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin: 15px 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="color: var(--accent);">💡</span>
+              <small style="color: var(--muted); font-size: 12px;">
+                <strong data-i18n="login.tip.register">Para registrarte:</strong> <span data-i18n="login.tip.register.desc">Completa todos los campos</span>
+              </small>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--accent);">🔑</span>
+              <small style="color: var(--muted); font-size: 12px;">
+                <strong data-i18n="login.tip.login">Para iniciar sesión:</strong> <span data-i18n="login.tip.login.desc">Solo email y contraseña</span>
+              </small>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <button class="btn" type="submit" data-i18n="login.register">📝 Registrarse</button>
+            <button class="small-btn" type="button" id="login-btn" data-i18n="login.signin">🚀 Iniciar Sesión</button>
+          </div>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+          <small style="color: var(--muted); font-size: 12px;" data-i18n="login.terms">
+            Al registrarte aceptas nuestros términos y condiciones
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Ajustes -->
+<div id="settings-modal" class="modal">
   <div class="modal-content">
-    <span class="close-modal" id="close-login-modal">&times;</span>
-    <div id="login-modal-body">
-      <h2>💻 ElectroInformatic</h2>
-      <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;">
-        Únete a nuestra comunidad de expertos
-      </p>
+    <span class="close-modal" id="close-settings-modal">&times;</span>
+    <div class="settings-container">
+      <h2 data-i18n="settings.title">Ajustes</h2>
 
-      <form id="login-form">
-        <input type="email" id="login-email" placeholder="📧 Correo electrónico" required>
-        <input type="text" id="login-name" placeholder="👤 Nombre completo" required>
-        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
-
-        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin: 15px 0;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span style="color: var(--accent);">💡</span>
-            <small style="color: var(--muted); font-size: 12px;">
-              <strong>Para registrarte:</strong> Completa todos los campos
-            </small>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: var(--accent);">🔑</span>
-            <small style="color: var(--muted); font-size: 12px;">
-              <strong>Para iniciar sesión:</strong> Solo email y contraseña
-            </small>
+      <!-- Tamaño de Fuente -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🔤</div>
+          <div>
+            <h3 data-i18n="settings.fontSize">Tamaño de letra</h3>
+            <p class="settings-description" data-i18n="settings.fontSize.desc">Ajusta el tamaño del texto para mejor legibilidad</p>
           </div>
         </div>
-
-        <div class="form-buttons">
-          <button class="btn" type="submit">📝 Registrarse</button>
-          <button class="small-btn" type="button" id="login-btn">🚀 Iniciar Sesión</button>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-font-size="small">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.small">Pequeño</div>
+              <div class="option-desc" data-i18n="settings.small.desc">Texto compacto</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="medium">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.medium">Mediano</div>
+              <div class="option-desc" data-i18n="settings.medium.desc">Tamaño estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="large">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.large">Grande</div>
+              <div class="option-desc" data-i18n="settings.large.desc">Texto ampliado</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="xlarge">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.xlarge">Muy Grande</div>
+              <div class="option-desc" data-i18n="settings.xlarge.desc">Texto extra grande</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
         </div>
-      </form>
+      </div>
 
-      <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <small style="color: var(--muted); font-size: 12px;">
-          Al registrarte aceptas nuestros términos y condiciones
-        </small>
+      <!-- Idioma -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🌐</div>
+          <div>
+            <h3 data-i18n="settings.language">Idioma</h3>
+            <p class="settings-description" data-i18n="settings.language.desc">Selecciona tu idioma preferido</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-language="es">
+            <div class="option-icon">🇪🇸</div>
+            <div class="option-content">
+              <div class="option-title">Español</div>
+              <div class="option-desc" data-i18n="settings.language.es">Español</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="en">
+            <div class="option-icon">🇺🇸</div>
+            <div class="option-content">
+              <div class="option-title">English</div>
+              <div class="option-desc" data-i18n="settings.language.en">Inglés</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="zh">
+            <div class="option-icon">🇨🇳</div>
+            <div class="option-content">
+              <div class="option-title">中文</div>
+              <div class="option-desc" data-i18n="settings.language.zh">Chino</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+<div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">👁️</div>
+          <div>
+            <h3 data-i18n="settings.accessibility">Accesibilidad Visual</h3>
+            <p class="settings-description" data-i18n="settings.accessibility.desc">Modos de color para daltonismo</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-color-mode="normal">
+            <div class="option-icon">🌈</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.normal">Normal</div>
+              <div class="option-desc" data-i18n="settings.color.normal.desc">Colores estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="protanopia">
+            <div class="option-icon">🔵</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.protanopia">Protanopía</div>
+              <div class="option-desc" data-i18n="settings.color.protanopia.desc">Sin Rojo (Usa Azules)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="tritanopia">
+            <div class="option-icon">🔴</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.tritanopia">Tritanopía</div>
+              <div class="option-desc" data-i18n="settings.color.tritanopia.desc">Sin Azul (Usa Rojos)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+      <!-- Botón de guardar -->
+      <div class="settings-actions">
+        <button class="btn btn-primary" id="save-settings" data-i18n="settings.save">
+          <span class="btn-icon">💾</span>
+          <span data-i18n="settings.save">Guardar Ajustes</span>
+        </button>
       </div>
     </div>
   </div>
 </div>
+
   <script src="script.js"></script>
+
+   <!-- Script para tutoriales en carrito.html -->
+<script>
+  // Comportamiento específico para la página del carrito durante el tutorial
+  document.addEventListener('DOMContentLoaded', function() {
+    // Si el carrito está vacío y hay un tutorial activo, redirigir a comprar
+    if (Tutorial.isActive && state.cart.length === 0) {
+      setTimeout(() => {
+        alert('Parece que tu carrito está vacío. Vamos a la página de productos para añadir algo.');
+        window.location.href = 'comprar.html';
+      }, 1000);
+    }
+  });
+</script>
 </body>
 </html>

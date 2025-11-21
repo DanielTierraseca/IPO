@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title data-i18n="page.title.offers">ElectroInformatic — Ofertas Especiales</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">!e¡</div>
+      <div>
+        <div style="font-weight:800" data-i18n="header.brand">ElectroInformatic</div>
+        <div style="font-size:12px;color:var(--muted)" data-i18n="header.tagline">Dispositivos electrónicos</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="nav-btn" id="settings-btn" data-i18n="header.settings">⚙️</button>
+      <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn" data-i18n="header.cart">Carrito (0)</a>
+      <a href="ofertas.html" class="nav-btn offer-btn" id="offer-btn">🎁 <span data-i18n="header.nav.offers">Ofertas</span></a>
+      <button class="theme-toggle-btn" id="theme-toggle-btn" title="Cambiar tema">🌓</button>
+      <button class="hamburger-btn" id="hamburger-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Menú lateral -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <button class="close-sidebar" id="close-sidebar">&times;</button>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link" data-i18n="nav.home">Inicio</a>
+      <a href="comprar.html" class="sidebar-link" data-i18n="nav.shop">Comprar</a>
+      <a href="ofertas.html" class="sidebar-link" data-i18n="header.nav.offers">Ofertas</a>
+      <a href="reparar.html" class="sidebar-link" data-i18n="nav.repair">Reparar</a>
+      <a href="mis-compras.html" class="sidebar-link" data-i18n="nav.purchases">Mis Compras</a>
+      <a href="#" class="sidebar-link" id="login-sidebar-link" data-i18n="nav.login">Iniciar Sesión</a>
+    </nav>
+  </aside>
+
+  <main>
+    <!-- Banner de Black Friday -->
+    <div class="banner" style="background: linear-gradient(90deg, #FF6B6B, #FF8E53, #FF6B6B); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 30px; position: relative; overflow: hidden;">
+      <h1 style="color: white; margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);" data-i18n="offers.black_friday.title">🛍️ BLACK FRIDAY 🛍️</h1>
+      <p style="color: white; font-size: 1.2rem; margin: 10px 0;" data-i18n="offers.black_friday.subtitle">¡Ofertas exclusivas por tiempo limitado!</p>
+    </div>
+
+    <h2 data-i18n="offers.special_offers">Ofertas Especiales</h2>
+
+<p class="muted" data-i18n="offers.special_offers.subtitle" style="margin-bottom: 40px;">Aprovecha nuestras promociones exclusivas por tiempo limitado</p>
+
+    <!-- Promociones destacadas -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 40px;">
+      <div class="card offer-card" style="background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(255,142,83,0.1)); border: 2px dashed #FF6B6B;">
+        <div style="text-align: center; padding: 12px;">
+          <div style="font-size: 3rem; margin-bottom: 8px 20px;">🎁</div>
+          <h3 style="color: #FF6B6B; margin: 0 0 10px 0;" data-i18n="offers.3x2.title">3x2 en Auriculares</h3>
+          <p style="margin: 0; color: var(--muted);" data-i18n="offers.3x2.description">Llévate 3 auriculares y paga solo 2. ¡La mejor oferta en sonido!</p>
+          <div style="margin-top: 15px; background: rgba(255,107,107,0.2); padding: 8px; border-radius: 8px;">
+            <small style="color: #FF6B6B;" data-i18n="offers.3x2.details">Aplica en todos los modelos de auriculares</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="card offer-card" style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(14,165,233,0.1)); border: 2px dashed #3b82f6;">
+        <div style="text-align: center; padding: 12px;">
+          <div style="font-size: 3rem; margin-bottom: 8px 20px;">💰</div>
+          <h3 style="color: #3b82f6; margin: 0 0 10px 0;" data-i18n="offers.20_discount.title">20% DTO en +250€</h3>
+          <p style="margin: 0; color: var(--muted);" data-i18n="offers.20_discount.description">Consigue un 20% de descuento en compras superiores a 250€</p>
+          <div style="margin-top: 15px; background: rgba(59,130,246,0.2); padding: 8px; border-radius: 8px;">
+            <small style="color: #3b82f6;" data-i18n="offers.20_discount.details">Se aplica automáticamente</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="card offer-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(110,231,183,0.1)); border: 2px dashed #10b981;">
+        <div style="text-align: center; padding: 12px;">
+          <div style="font-size: 3rem; margin-bottom: 8px 20px;">🚚</div>
+          <h3 style="color: #10b981; margin: 0 0 10px 0;" data-i18n="offers.free_shipping.title">Envío Gratis</h3>
+          <p style="margin: 0; color: var(--muted);" data-i18n="offers.free_shipping.description">Envío gratuito en todos los pedidos durante el Black Friday</p>
+          <div style="margin-top: 15px; background: rgba(16,185,129,0.2); padding: 8px; border-radius: 8px;">
+            <small style="color: #10b981;" data-i18n="offers.free_shipping.details">Válido hasta agotar existencias</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Productos en oferta -->
+    <h2 data-i18n="offers.featured_products" style="margin-top: 50px; margin-bottom: 30px;">Productos Destacados en Oferta</h2>
+
+    <div id="offer-product-list" class="grid"></div>
+
+    <!-- Modal para detalles del producto -->
+    <div id="product-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="modal-body"></div>
+        <div class="modal-buttons">
+          <button class="btn" id="modal-add-to-cart" data-i18n="button.add_to_cart">Añadir al Carrito</button>
+        </div>
+      </div>
+    </div>
+
+    <footer data-i18n="footer.text">✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
+  </main>
+
+  <!-- Modal de Inicio de Sesión -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-login-modal">&times;</span>
+      <div id="login-modal-body">
+        <h2 data-i18n="login.title">💻 ElectroInformatic</h2>
+        <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;" data-i18n="login.subtitle">
+          Únete a nuestra comunidad de expertos
+        </p>
+
+        <form id="login-form">
+          <input type="email" id="login-email" placeholder="📧 Correo electrónico" data-i18n-placeholder="login.email" required>
+          <input type="text" id="login-name" placeholder="👤 Nombre completo" data-i18n-placeholder="login.name" required>
+          <input type="password" id="login-password" placeholder="🔒 Contraseña" data-i18n-placeholder="login.password" required>
+
+          <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin: 15px 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="color: var(--accent);">💡</span>
+              <small style="color: var(--muted); font-size: 12px;">
+                <strong data-i18n="login.tip.register">Para registrarte:</strong> <span data-i18n="login.tip.register.desc">Completa todos los campos</span>
+              </small>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--accent);">🔑</span>
+              <small style="color: var(--muted); font-size: 12px;">
+                <strong data-i18n="login.tip.login">Para iniciar sesión:</strong> <span data-i18n="login.tip.login.desc">Solo email y contraseña</span>
+              </small>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <button class="btn" type="submit" data-i18n="login.register">📝 Registrarse</button>
+            <button class="small-btn" type="button" id="login-btn" data-i18n="login.signin">🚀 Iniciar Sesión</button>
+          </div>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+          <small style="color: var(--muted); font-size: 12px;" data-i18n="login.terms">
+            Al registrarte aceptas nuestros términos y condiciones
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Ajustes -->
+<div id="settings-modal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" id="close-settings-modal">&times;</span>
+    <div class="settings-container">
+      <h2 data-i18n="settings.title">Ajustes</h2>
+
+      <!-- Tamaño de Fuente -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🔤</div>
+          <div>
+            <h3 data-i18n="settings.fontSize">Tamaño de letra</h3>
+            <p class="settings-description" data-i18n="settings.fontSize.desc">Ajusta el tamaño del texto para mejor legibilidad</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-font-size="small">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.small">Pequeño</div>
+              <div class="option-desc" data-i18n="settings.small.desc">Texto compacto</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="medium">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.medium">Mediano</div>
+              <div class="option-desc" data-i18n="settings.medium.desc">Tamaño estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="large">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.large">Grande</div>
+              <div class="option-desc" data-i18n="settings.large.desc">Texto ampliado</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="xlarge">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.xlarge">Muy Grande</div>
+              <div class="option-desc" data-i18n="settings.xlarge.desc">Texto extra grande</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Idioma -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🌐</div>
+          <div>
+            <h3 data-i18n="settings.language">Idioma</h3>
+            <p class="settings-description" data-i18n="settings.language.desc">Selecciona tu idioma preferido</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-language="es">
+            <div class="option-icon">🇪🇸</div>
+            <div class="option-content">
+              <div class="option-title">Español</div>
+              <div class="option-desc" data-i18n="settings.language.es">Español</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="en">
+            <div class="option-icon">🇺🇸</div>
+            <div class="option-content">
+              <div class="option-title">English</div>
+              <div class="option-desc" data-i18n="settings.language.en">Inglés</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="zh">
+            <div class="option-icon">🇨🇳</div>
+            <div class="option-content">
+              <div class="option-title">中文</div>
+              <div class="option-desc" data-i18n="settings.language.zh">Chino</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+<div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">👁️</div>
+          <div>
+            <h3 data-i18n="settings.accessibility">Accesibilidad Visual</h3>
+            <p class="settings-description" data-i18n="settings.accessibility.desc">Modos de color para daltonismo</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-color-mode="normal">
+            <div class="option-icon">🌈</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.normal">Normal</div>
+              <div class="option-desc" data-i18n="settings.color.normal.desc">Colores estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="protanopia">
+            <div class="option-icon">🔵</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.protanopia">Protanopía</div>
+              <div class="option-desc" data-i18n="settings.color.protanopia.desc">Sin Rojo (Usa Azules)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="tritanopia">
+            <div class="option-icon">🔴</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.tritanopia">Tritanopía</div>
+              <div class="option-desc" data-i18n="settings.color.tritanopia.desc">Sin Azul (Usa Rojos)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+      <!-- Botón de guardar -->
+      <div class="settings-actions">
+        <button class="btn btn-primary" id="save-settings" data-i18n="settings.save">
+          <span class="btn-icon">💾</span>
+          <span data-i18n="settings.save">Guardar Ajustes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <script src="script.js"></script>
+  <script>
+  // ==========================================
+  // SISTEMA DE OFERTAS (CONSERVANDO DISEÑO ORIGINAL)
+  // ==========================================
+  const Offers = {
+    offerProductIds: [3, 6, 9, 12, 19, 15, 7, 14, 16, 17, 18],
+    discountedProducts: [],
+
+    init() {
+      this.calculateDiscounts();
+      this.render();
+      // Iniciamos la animación de los banners superiores (los cuadros de colores)
+      this.animateBanners();
+    },
+
+    calculateDiscounts() {
+      const offerProducts = PRODUCTS.filter(product => this.offerProductIds.includes(product.id));
+
+      this.discountedProducts = offerProducts.map(product => {
+        let discount = 0;
+        let discountText = '';
+        let offerType = 'default';
+
+        if ([3, 16, 17, 18, 19].includes(product.id)) {
+          discount = 33; // Aproximado para 3x2
+          discountText = '3x2';
+          offerType = '3x2';
+        } else if ([6, 12].includes(product.id)) {
+          discount = 20;
+          discountText = '20%';
+          offerType = '20%';
+        } else {
+          discount = 15;
+          discountText = '15%';
+          offerType = '15%';
+        }
+
+        return {
+          ...product,
+          discount: discount,
+          discountText: discountText,
+          offerType: offerType,
+          finalPrice: product.price * (1 - discount / 100)
+        };
+      });
+    },
+
+    // ESTA ES LA FUNCIÓN QUE SE LLAMA AL CAMBIAR EL IDIOMA
+    render() {
+      const offerList = document.getElementById('offer-product-list');
+      if (!offerList) return;
+
+      // 1. Obtenemos las traducciones actuales
+      const t = this.getOfferTranslations();
+
+      offerList.innerHTML = '';
+
+      this.discountedProducts.forEach(product => {
+        // 2. Obtenemos el producto con textos traducidos
+        const translatedProduct = this.getTranslatedProduct(product);
+
+        const div = document.createElement('div');
+
+        // !!! IMPORTANTE: Mantenemos solo 'card' para no romper tu diseño !!!
+        div.className = 'card';
+
+        div.onclick = () => openOfferModal(product);
+
+        // Traducir la etiqueta de la oferta
+        let offerLabel = product.offerType;
+        // Intentamos traducir los textos específicos de las ofertas si existen en el diccionario
+        if(product.offerType === '3x2') {
+            offerLabel = t['offers.3x2.title'] ? t['offers.3x2.title'].replace(' en Auriculares', '').replace(' on Headphones', '') : '3x2';
+        }
+
+        // Renderizamos el HTML EXACTAMENTE como lo tenías antes
+        div.innerHTML = `
+          <div class="thumb">
+            <img src="${product.image}" alt="${translatedProduct.name}"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="thumb-placeholder" style="display:none; background:linear-gradient(135deg,#FF6B6B,#FF8E53); align-items:center; justify-content:center; width:100%; height:100%;">
+              ${translatedProduct.name.split(' ')[0]}
+            </div>
+
+            <div class="offer-tag" data-offer-type="${product.offerType}">
+              ${offerLabel}
+            </div>
+          </div>
+          <div class="product-title">${translatedProduct.name}</div>
+          <div class="muted">${translatedProduct.desc}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="text-decoration: line-through; color: var(--muted); margin-right: 8px;">€${product.price}</span>
+              <span class="price" style="color: #FF6B6B;">€${product.finalPrice.toFixed(2)}</span>
+            </div>
+            <button class="small-btn" onclick="event.stopPropagation(); Cart.add(${product.id})">${t['button.buy']}</button>
+          </div>
+        `;
+        offerList.appendChild(div);
+      });
+    },
+
+    getOfferTranslations() {
+      const settings = AppStorage.getSettings();
+      const translations = Settings.getTranslations();
+      return translations[settings.language] || translations.es;
+    },
+
+    getTranslatedProduct(product) {
+      const settings = AppStorage.getSettings();
+      const translations = Settings.getTranslations();
+      const currentTranslations = translations[settings.language] || translations.es;
+
+      const productKey = `product.${product.id}`;
+      const translatedName = currentTranslations[`${productKey}.name`] || product.name;
+      const translatedDesc = currentTranslations[`${productKey}.desc`] || product.desc;
+
+      const translatedSpecs = product.specs ? product.specs.map(spec => {
+        const specKey = 'specs.' + spec.toLowerCase()
+          .replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/["]/g, '').replace(/_$/, '');
+        return currentTranslations[specKey] || spec;
+      }) : [];
+
+      return { ...product, name: translatedName, desc: translatedDesc, specs: translatedSpecs };
+    },
+
+    animateBanners() {
+        const cards = document.querySelectorAll(".offer-card"); // Esto solo afecta a los banners de arriba
+        cards.forEach((card, index) => {
+          setTimeout(() => {
+            card.classList.add("visible");
+          }, index * 200);
+        });
+    }
+  };
+
+  // Funciones del Modal (Mantenidas igual)
+  function closeOfferModal() {
+    const modalContent = document.querySelector('#product-modal .modal-content');
+    if (modalContent) modalContent.classList.remove('offer-modal');
+    Products.closeModal();
+  }
+
+  function openOfferModal(product) {
+    const t = Offers.getOfferTranslations();
+    const translatedProduct = Offers.getTranslatedProduct(product);
+
+    state.currentProductId = product.id;
+    const modal = document.getElementById('product-modal');
+    const modalBody = document.getElementById('modal-body');
+    const modalContent = modal.querySelector('.modal-content');
+    const closeBtn = modal.querySelector('.close-modal');
+
+    modalContent.classList.add('offer-modal');
+    closeBtn.onclick = closeOfferModal;
+
+    // Lógica de sugerencias (3x2)
+    let suggestionHTML = '';
+    if (product.offerType === '3x2') {
+      const other3x2Products = Offers.discountedProducts.filter(p => p.offerType === '3x2' && p.id !== product.id);
+      if (other3x2Products.length > 0) {
+        let itemsHTML = '';
+        other3x2Products.forEach(p => {
+          const translatedP = Offers.getTranslatedProduct(p);
+          itemsHTML += `
+            <div class="suggestion-product-item" onclick='openOfferModal(PRODUCTS.find(x=>x.id==${p.id}) ? {...PRODUCTS.find(x=>x.id==${p.id}), ...Offers.discountedProducts.find(d=>d.id==${p.id})} : null)'>
+              <img src="${p.image}" alt="${translatedP.name}" onerror="this.style.display='none'">
+              <div class="name">${translatedP.name}</div>
+              <div class="price">€${p.finalPrice.toFixed(2)}</div>
+            </div>
+          `;
+        });
+        suggestionHTML = `
+          <div class="modal-offer-suggestion">
+            <h4>${t['offers.complete_offer']}</h4>
+            <p class="muted" style="font-size: 13px; margin-top: -5px; margin-bottom: 10px;">${t['offers.add_for_promotion']}</p>
+            <div class="suggestion-product-grid">${itemsHTML}</div>
+          </div>
+        `;
+      }
+    }
+
+    modalBody.innerHTML = `
+      <div class="modal-product-content">
+        <div class="modal-offer-tag">${product.discountText} ${t['offers.off']}</div>
+        <img src="${translatedProduct.image}" alt="${translatedProduct.name}" class="modal-product-image" onerror="this.style.display='none'">
+        <div class="modal-product-title">${translatedProduct.name}</div>
+        <div class="modal-product-price">
+          <span class="modal-original-price">€${product.price}</span>
+          <span class="modal-product-price offer-price">€${product.finalPrice.toFixed(2)}</span>
+        </div>
+        <div class="modal-product-desc">${translatedProduct.desc}</div>
+        ${translatedProduct.specs && translatedProduct.specs.length > 0 ? `
+          <div class="modal-product-specs">
+            <h4>${t['product.specs'] || 'Especificaciones:'}</h4>
+            <div class="specs-list">
+              ${translatedProduct.specs.map(spec => `<div class="spec-item">${spec}</div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+      ${suggestionHTML}
+    `;
+    modal.style.display = 'block';
+    document.body.classList.add('body-no-scroll');
+  }
+
+  // Inicialización
+  document.addEventListener('DOMContentLoaded', function() {
+    Offers.init();
+    Settings.applyLanguage(AppStorage.getSettings().language);
+  });
+</script>
+
+</body>
+</html>

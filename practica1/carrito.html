@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ElectroInformatic — Carrito</title>
+  <title data-i18n="page.title.cart">ElectroInformatic — Carrito</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,14 +12,21 @@
   <div class="brand">
     <div class="logo">!e¡</div>
     <div>
-      <div style="font-weight:800">ElectroInformatic</div>
-      <div style="font-size:12px;color:var(--muted)">Dispositivos electrónicos</div>
+      <div style="font-weight:800" data-i18n="header.brand">ElectroInformatic</div>
+      <div style="font-size:12px;color:var(--muted)" data-i18n="header.tagline">Dispositivos electrónicos</div>
     </div>
   </div>
 
   <div class="header-actions">
+    <!-- Botón de ajustes -->
+    <button class="nav-btn" id="settings-btn" data-i18n="header.settings">⚙️</button>
+
     <!-- Carrito siempre visible -->
-    <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn">Carrito (0)</a>
+    <a href="carrito.html" class="nav-btn cart-btn" id="cart-btn" data-i18n="header.cart">Carrito (0)</a>
+
+    <a href="ofertas.html" class="nav-btn offer-btn" id="offer-btn">🎁 <span data-i18n="header.nav.offers">Ofertas</span></a>
+
+  <button class="theme-toggle-btn" id="theme-toggle-btn" title="Cambiar tema">🌓</button>
 
     <!-- Botón hamburguesa -->
     <button class="hamburger-btn" id="hamburger-btn">
@@ -35,19 +42,30 @@
 <aside class="sidebar" id="sidebar">
   <button class="close-sidebar" id="close-sidebar">&times;</button>
   <nav class="sidebar-nav">
-    <a href="index.html" class="sidebar-link">Inicio</a>
-    <a href="comprar.html" class="sidebar-link">Comprar</a>
-    <a href="reparar.html" class="sidebar-link">Reparar</a>
-    <a href="mis-compras.html" class="sidebar-link">Mis Compras</a>
-    <a href="#" class="sidebar-link" id="login-sidebar-link">Iniciar Sesión</a>
+    <a href="index.html" class="sidebar-link" data-i18n="nav.home">Inicio</a>
+    <a href="comprar.html" class="sidebar-link" data-i18n="nav.shop">Comprar</a>
+    <a href="ofertas.html" class="sidebar-link" data-i18n="header.nav.offers">Ofertas</a>
+    <a href="reparar.html" class="sidebar-link" data-i18n="nav.repair">Reparar</a>
+    <a href="mis-compras.html" class="sidebar-link" data-i18n="nav.purchases">Mis Compras</a>
+    <a href="#" class="sidebar-link" id="login-sidebar-link" data-i18n="nav.login">Iniciar Sesión</a>
   </nav>
 </aside>
 
   <main>
-    <h2>Carrito</h2>
-    <div id="cart-contents" class="card cart-list">Tu carrito está vacío.</div>
+    <h2 data-i18n="cart.title">Carrito</h2>
 
-    <footer>✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
+    <div id="cart-contents" class="card cart-list" data-i18n="cart.empty">
+  Tu carrito está vacío.
+</div>
+
+<!-- BOTÓN DE PAGO QUE DEBE APARECER CUANDO HAY PRODUCTOS -->
+<div id="checkout-section" style="display: none; margin-top: 20px;">
+  <button class="btn" id="checkout-btn" style="width: 100%; padding: 14px; font-size: 16px;" data-i18n="cart.checkout">
+  💳 Proceder al Pago
+  </button>
+</div>
+
+    <footer data-i18n="footer.text">✨ La tienda para verdaderos ElectroInformaticos ✨</footer>
   </main>
 
 <!-- Modal de Inicio de Sesión -->
@@ -55,39 +73,39 @@
   <div class="modal-content">
     <span class="close-modal" id="close-login-modal">&times;</span>
     <div id="login-modal-body">
-      <h2>💻 ElectroInformatic</h2>
-      <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;">
+      <h2 data-i18n="login.title">💻 ElectroInformatic</h2>
+      <p style="text-align: center; color: var(--muted); margin-bottom: 25px; font-size: 14px;" data-i18n="login.subtitle">
         Únete a nuestra comunidad de expertos
       </p>
 
       <form id="login-form">
-        <input type="email" id="login-email" placeholder="📧 Correo electrónico" required>
-        <input type="text" id="login-name" placeholder="👤 Nombre completo" required>
-        <input type="password" id="login-password" placeholder="🔒 Contraseña" required>
+        <input type="email" id="login-email" placeholder="📧 Correo electrónico" data-i18n-placeholder="login.email" required>
+        <input type="text" id="login-name" placeholder="👤 Nombre completo" data-i18n-placeholder="login.name" required>
+        <input type="password" id="login-password" placeholder="🔒 Contraseña" data-i18n-placeholder="login.password" required>
 
         <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin: 15px 0;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
             <span style="color: var(--accent);">💡</span>
             <small style="color: var(--muted); font-size: 12px;">
-              <strong>Para registrarte:</strong> Completa todos los campos
+              <strong data-i18n="login.tip.register">Para registrarte:</strong> <span data-i18n="login.tip.register.desc">Completa todos los campos</span>
             </small>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="color: var(--accent);">🔑</span>
             <small style="color: var(--muted); font-size: 12px;">
-              <strong>Para iniciar sesión:</strong> Solo email y contraseña
+              <strong data-i18n="login.tip.login">Para iniciar sesión:</strong> <span data-i18n="login.tip.login.desc">Solo email y contraseña</span>
             </small>
           </div>
         </div>
 
         <div class="form-buttons">
-          <button class="btn" type="submit">📝 Registrarse</button>
-          <button class="small-btn" type="button" id="login-btn">🚀 Iniciar Sesión</button>
+          <button class="btn" type="submit" data-i18n="login.register">📝 Registrarse</button>
+          <button class="small-btn" type="button" id="login-btn" data-i18n="login.signin">🚀 Iniciar Sesión</button>
         </div>
       </form>
 
       <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <small style="color: var(--muted); font-size: 12px;">
+        <small style="color: var(--muted); font-size: 12px;" data-i18n="login.terms">
           Al registrarte aceptas nuestros términos y condiciones
         </small>
       </div>
@@ -95,25 +113,25 @@
   </div>
 </div>
 
-  <script src="script.js"></script>
 <!-- Modal de Pago -->
 <div id="payment-modal" class="modal">
   <div class="modal-content">
     <span class="close-modal" id="close-payment-modal">&times;</span>
     <div class="card">
-      <h2>💳 Finalizar Compra</h2>
+      <h2 data-i18n="payment.title">💳 Finalizar Compra</h2>
 
       <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <h4 style="margin: 0 0 10px 0;">Resumen del Pedido</h4>
+        <h4 style="margin: 0 0 10px 0;" data-i18n="payment.summary">Resumen del Pedido</h4>
         <div id="payment-summary"></div>
         <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
           <strong>Total: <span id="payment-total">€0</span></strong>
+
         </div>
       </div>
 
       <form id="payment-form">
         <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; color: var(--muted);">Método de Pago</label>
+          <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.method">Método de Pago</label>
           <select id="payment-method" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
             <option value="credit">💳 Tarjeta de Crédito</option>
             <option value="debit">💳 Tarjeta de Débito</option>
@@ -125,23 +143,23 @@
         <!-- Campos para tarjeta (visibles por defecto) -->
         <div id="card-fields">
           <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; color: var(--muted);">Número de Tarjeta</label>
+            <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.card.number">Número de Tarjeta</label>
             <input type="text" id="card-number" placeholder="1234 5678 9012 3456" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
           </div>
 
           <div style="display: flex; gap: 10px; margin-bottom: 15px;">
             <div style="flex: 1;">
-              <label style="display: block; margin-bottom: 5px; color: var(--muted);">Fecha de Expiración</label>
+              <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.card.expiry">Fecha de Expiración</label>
               <input type="text" id="card-expiry" placeholder="MM/AA" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
             </div>
             <div style="flex: 1;">
-              <label style="display: block; margin-bottom: 5px; color: var(--muted);">CVV</label>
+              <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.card.cvv">CVV</label>
               <input type="text" id="card-cvv" placeholder="123" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
             </div>
           </div>
 
           <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; color: var(--muted);">Nombre del Titular</label>
+            <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.card.name">Nombre del Titular</label>
             <input type="text" id="card-name" placeholder="JUAN PEREZ" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
           </div>
         </div>
@@ -149,39 +167,223 @@
         <!-- Campos para PayPal (ocultos por defecto) -->
         <div id="paypal-fields" style="display: none;">
           <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; color: var(--muted);">Serás redirigido a PayPal para completar el pago</p>
+            <p style="margin: 0; color: var(--muted);" data-i18n="payment.paypal.message">Serás redirigido a PayPal para completar el pago</p>
           </div>
         </div>
 
         <!-- Campos para transferencia (ocultos por defecto) -->
         <div id="transfer-fields" style="display: none;">
           <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-            <p style="margin: 0 0 10px 0; color: var(--muted);">Datos para transferencia:</p>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>IBAN:</strong> ES12 3456 7890 1234 5678 9012</p>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Beneficiario:</strong> ElectroInformatic SL</p>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Concepto:</strong> Pedido #<span id="order-number"></span></p>
+            <p style="margin: 0 0 10px 0; color: var(--muted);" data-i18n="payment.transfer.details">Datos para transferencia:</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong data-i18n="payment.transfer.iban">IBAN:</strong> ES12 3456 7890 1234 5678 9012</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong data-i18n="payment.transfer.beneficiary">Beneficiario:</strong> ElectroInformatic SL</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong data-i18n="payment.transfer.concept">Concepto:</strong> Pedido #<span id="order-number"></span></p>
           </div>
         </div>
 
         <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; color: var(--muted);">Correo Electrónico</label>
+          <label style="display: block; margin-bottom: 5px; color: var(--muted);" data-i18n="payment.email">Correo Electrónico</label>
           <input type="email" id="payment-email" placeholder="tu@email.com" style="width: 100%; padding: 12px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white;">
         </div>
 
         <div style="margin-bottom: 20px;">
           <label style="display: flex; align-items: center; gap: 8px; color: var(--muted);">
             <input type="checkbox" id="terms-accepted" style="transform: scale(1.2);">
-            Acepto los <a href="#" style="color: var(--accent);">términos y condiciones</a>
+            <span data-i18n="payment.terms">Acepto los <a href="#" style="color: var(--accent);">términos y condiciones</a></span>
           </label>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" class="small-btn" id="cancel-payment">Cancelar</button>
-          <button type="submit" class="btn" id="confirm-payment">Pagar Ahora</button>
+          <button type="button" class="small-btn" id="cancel-payment" data-i18n="payment.cancel">Cancelar</button>
+          <button type="submit" class="btn" id="confirm-payment" data-i18n="payment.pay">Pagar Ahora</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<!-- Modal de Ajustes -->
+<div id="settings-modal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" id="close-settings-modal">&times;</span>
+    <div class="settings-container">
+      <h2 data-i18n="settings.title">Ajustes</h2>
+
+      <!-- Tamaño de Fuente -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🔤</div>
+          <div>
+            <h3 data-i18n="settings.fontSize">Tamaño de letra</h3>
+            <p class="settings-description" data-i18n="settings.fontSize.desc">Ajusta el tamaño del texto para mejor legibilidad</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-font-size="small">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.small">Pequeño</div>
+              <div class="option-desc" data-i18n="settings.small.desc">Texto compacto</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="medium">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.medium">Mediano</div>
+              <div class="option-desc" data-i18n="settings.medium.desc">Tamaño estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="large">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.large">Grande</div>
+              <div class="option-desc" data-i18n="settings.large.desc">Texto ampliado</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-font-size="xlarge">
+            <div class="option-icon">A</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.xlarge">Muy Grande</div>
+              <div class="option-desc" data-i18n="settings.xlarge.desc">Texto extra grande</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Idioma -->
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🌐</div>
+          <div>
+            <h3 data-i18n="settings.language">Idioma</h3>
+            <p class="settings-description" data-i18n="settings.language.desc">Selecciona tu idioma preferido</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-language="es">
+            <div class="option-icon">🇪🇸</div>
+            <div class="option-content">
+              <div class="option-title">Español</div>
+              <div class="option-desc" data-i18n="settings.language.es">Español</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="en">
+            <div class="option-icon">🇺🇸</div>
+            <div class="option-content">
+              <div class="option-title">English</div>
+              <div class="option-desc" data-i18n="settings.language.en">Inglés</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+          <div class="settings-option-card" data-language="zh">
+            <div class="option-icon">🇨🇳</div>
+            <div class="option-content">
+              <div class="option-title">中文</div>
+              <div class="option-desc" data-i18n="settings.language.zh">Chino</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+<div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">👁️</div>
+          <div>
+            <h3 data-i18n="settings.accessibility">Accesibilidad Visual</h3>
+            <p class="settings-description" data-i18n="settings.accessibility.desc">Modos de color para daltonismo</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-color-mode="normal">
+            <div class="option-icon">🌈</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.normal">Normal</div>
+              <div class="option-desc" data-i18n="settings.color.normal.desc">Colores estándar</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="protanopia">
+            <div class="option-icon">🔵</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.protanopia">Protanopía</div>
+              <div class="option-desc" data-i18n="settings.color.protanopia.desc">Sin Rojo (Usa Azules)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-color-mode="tritanopia">
+            <div class="option-icon">🔴</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.color.tritanopia">Tritanopía</div>
+              <div class="option-desc" data-i18n="settings.color.tritanopia.desc">Sin Azul (Usa Rojos)</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de guardar -->
+      <div class="settings-actions">
+        <button class="btn btn-primary" id="save-settings" data-i18n="settings.save">
+          <span class="btn-icon">💾</span>
+          <span data-i18n="settings.save">Guardar Ajustes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  <script src="script.js"></script>
+
+  <!-- Tutorial carrito -->
+ <script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🛒 Carrito cargado - Inicializando tutorial');
+
+  // Inicializar el tutorial después de un pequeño delay
+  setTimeout(() => {
+    if (typeof Tutorial !== 'undefined') {
+      Tutorial.init();
+
+      // Debug: verificar estado del carrito
+      console.log('🔍 Estado del carrito:', {
+        items: state.cart.length,
+        total: state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0),
+        tutorialActive: Tutorial.isActive
+      });
+
+      // Solo redirigir si el carrito está vacío y hay tutorial activo
+      if (Tutorial.isActive && state.cart.length === 0) {
+        setTimeout(() => {
+          const settings = AppStorage.getSettings();
+          const translations = Settings.getTranslations();
+          const currentTranslations = translations[settings.language] || translations.es;
+          alert(currentTranslations['tutorial.empty_cart_redirect']);
+          window.location.href = 'comprar.html';
+        }, 1000);
+      }
+    }
+  }, 500);
+
+  // Forzar la visibilidad del botón de tutorial en carrito
+  setTimeout(() => {
+    const tutorialBtn = document.getElementById('tutorial-btn');
+    if (tutorialBtn) {
+      if (state.cart.length > 0) {
+        tutorialBtn.style.display = 'flex';
+        console.log('✅ Botón de tutorial mostrado en carrito');
+      } else {
+        tutorialBtn.style.display = 'none';
+        console.log('❌ Carrito vacío - ocultando botón de tutorial');
+      }
+    }
+  }, 1000);
+});
+</script>
 </body>
 </html>
