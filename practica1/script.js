@@ -3403,7 +3403,671 @@ updateDynamicTexts(translations) {
     };
   }
 };
+// =============================================
+// ELECTROBOT V7.0 - MULTILENGUAJE (ES/EN/ZH)
+// =============================================
 
+const Chatbot = {
+  isOpen: false,
+  messages: [],
+  voiceEnabled: false,
+  recognition: null,
+
+  // --- DICCIONARIO DE IDIOMAS ---
+  i18n: {
+    es: {
+      welcome: "¡Hola! Soy ElectroBot. ¿En qué te ayudo?",
+      intro: 'Di <strong>"Ayuda"</strong> para ver mis comandos.',
+      help_menu: `
+        <strong>🤖 COMANDOS:</strong><br>
+        🛍️ <strong>"Buscar [producto]"</strong><br>
+        🛒 <strong>"Ver carrito"</strong><br>
+        💡 <strong>"Recomienda [gaming/barato]"</strong><br>
+        🔧 <strong>"Estado reparación"</strong><br>
+        ℹ️ <strong>"Horario" / "Ubicación"</strong><br>
+        ✈️ <strong>"Ir a inicio" / "Ofertas"</strong><br>
+        🌗 <strong>"Cambiar tema"</strong><br>
+        🧹 <em>"Limpiar chat"</em>
+      `,
+      shop_closed: '🕒 Lunes a Viernes de 09:00 a 20:00.',
+      location: '📍 Calle Tecnológica 123, Polígono Digital.',
+      warranty: '🛡️ 3 años de garantía y 30 días de devolución.',
+      tech_slow: '🐢 Si va lento: 1. Reinicia. 2. Cierra programas. 3. Revisa el SSD.',
+      tech_broken: '🔥 Suena grave. Abre una incidencia en <a href="reparar.html">Reparar</a>.',
+      calc_tax: (p, t) => `🧮 Precio: €${p} + IVA = <strong>€${t}</strong>`,
+      nav_home: '✈️ Yendo al Inicio...',
+      nav_offers: '🎁 ¡Vamos a las ofertas!',
+      nav_shop: '🛍️ Abriendo tienda...',
+      nav_repair: '🔧 Abriendo taller...',
+      rec_title: (f) => `✨ Recomendaciones <strong>${f}</strong>:<br>`,
+      rec_ask: '¿Qué buscas? ¿Gaming, barato o trabajo?',
+      search_found: (n) => `He encontrado ${n} coincidencias:<br>`,
+      search_none: (q) => `No encuentro nada sobre "<strong>${q}</strong>". 📦`,
+      cart_empty: 'El carrito está vacío. 🛒',
+      cart_status: (c) => `Tienes <strong>${c} productos</strong>. <a href="carrito.html">Ver carrito</a>`,
+      login_req: 'Inicia sesión primero.',
+      login_open: 'Abriendo login...',
+      logout: 'Sesión cerrada. 👋',
+      theme_changed: '¡Tema cambiado! 🎨',
+      fact: '🤓 El primer ratón era de madera (1964).',
+      fallback: 'No te entiendo. Prueba con <strong>"Ayuda"</strong>.',
+
+      proactive: {
+        default: [
+          "👋 Hola, llevo un rato observando. ¿Necesitas que te guíe?",
+          "🤖 Bip, bop. ¿Buscas algo en concreto?",
+          "👀 Si te pierdes, estoy aquí para ayudarte.",
+          "✨ Recuerda que puedes cambiar el tema a Modo Oscuro si lo prefieres.",
+          "🚀 ¿Sabías que hacemos envíos en 24h?"
+        ],
+        shop: [ // Comprar
+          "🎮 ¿Buscas un PC Gaming o algo para trabajar? Pregúntame.",
+          "📉 Veo que dudas. ¿Quieres que te recomiende lo más barato?",
+          "🔥 Los portátiles están volando hoy. ¡Aprovecha!",
+          "🔍 Usa el buscador de arriba si no encuentras tu modelo.",
+          "⌨️ Tenemos teclados mecánicos muy buenos en oferta.",
+          "🖱️ ¿Eres de ratón inalámbrico o con cable? Tengo opciones."
+        ],
+        cart: [ // Carrito
+          "💳 ¿Tienes problemas con el pago? Puedo ayudarte.",
+          "🚚 Recuerda: ¡Envío gratis si superas cierto importe!",
+          "🛒 ¡Ya casi es tuyo! ¿Te ayudo a finalizar la compra?",
+          "🔒 El pago es 100% seguro, no te preocupes.",
+          "🎁 ¿Has revisado si te falta algo para aprovechar el envío gratis?",
+          "🏷️ Si tienes un código promocional, es el momento de usarlo."
+        ],
+        repair: [ // Reparar
+          "🛠️ Lamento que tu dispositivo falle. ¿Abrimos una incidencia?",
+          "🔍 ¿Quieres consultar el estado de una reparación antigua?",
+          "📱 ¿Pantalla rota? Tenemos técnicos especialistas.",
+          "💻 Si tu PC va lento, a veces basta con cambiar el disco duro.",
+          "⏱️ Nuestras reparaciones suelen tardar menos de 48h.",
+          "👨‍🔧 Nuestros técnicos son certificados por las marcas oficiales."
+        ],
+        offers: [ // Ofertas
+          "🎁 ¡El 3x2 en auriculares es nuestra mejor oferta!",
+          "⚡ ¡Corre que el stock del Black Friday vuela!",
+          "💸 ¿Has visto el descuento del 20%? Es automático.",
+          "🔥 Esa tarjeta gráfica tiene un precio histórico mínimo.",
+          "🎧 Los SoundMax están baratísimos ahora mismo.",
+          "🕒 Estas ofertas acaban pronto, no te lo pienses mucho."
+        ],
+        purchases: [ // Mis Compras
+          "⭐ ¿Qué tal tu última compra? ¡Nos encantaría leer tu reseña!",
+          "📄 ¿Necesitas descargar la factura de algún pedido?",
+          "📦 Esperamos que disfrutes de tus nuevos gadgets.",
+          "🔄 Tienes 30 días para devoluciones si algo no te convence.",
+          "🚚 Puedes seguir el estado de tu envío desde aquí."
+        ]
+      }
+    },
+    en: {
+      welcome: "Hi! I'm ElectroBot. How can I help?",
+      intro: 'Say <strong>"Help"</strong> to see my commands.',
+      help_menu: `
+        <strong>🤖 COMMANDS:</strong><br>
+        🛍️ <strong>"Search [product]"</strong><br>
+        🛒 <strong>"View cart"</strong><br>
+        💡 <strong>"Recommend [gaming/cheap]"</strong><br>
+        🔧 <strong>"Repair status"</strong><br>
+        ℹ️ <strong>"Hours" / "Location"</strong><br>
+        ✈️ <strong>"Go home" / "Offers"</strong><br>
+        🌗 <strong>"Change theme"</strong><br>
+        🧹 <em>"Clear chat"</em>
+      `,
+      shop_closed: '🕒 Mon-Fri from 09:00 to 20:00.',
+      location: '📍 123 Tech Street, Digital Park.',
+      warranty: '🛡️ 3-year warranty and 30-day returns.',
+      tech_slow: '🐢 Slow PC? 1. Restart. 2. Close apps. 3. Check SSD.',
+      tech_broken: '🔥 Sounds bad. Open a ticket in <a href="reparar.html">Repair</a>.',
+      calc_tax: (p, t) => `🧮 Price: €${p} + TAX = <strong>€${t}</strong>`,
+      nav_home: '✈️ Going Home...',
+      nav_offers: '🎁 Let\'s see offers!',
+      nav_shop: '🛍️ Opening shop...',
+      nav_repair: '🔧 Opening workshop...',
+      rec_title: (f) => `✨ Recommendations for <strong>${f}</strong>:<br>`,
+      rec_ask: 'What do you need? Gaming, cheap or work?',
+      search_found: (n) => `Found ${n} matches:<br>`,
+      search_none: (q) => `Nothing found for "<strong>${q}</strong>". 📦`,
+      cart_empty: 'Cart is empty. 🛒',
+      cart_status: (c) => `You have <strong>${c} items</strong>. <a href="carrito.html">View cart</a>`,
+      login_req: 'Please login first.',
+      login_open: 'Opening login...',
+      logout: 'Logged out. 👋',
+      theme_changed: 'Theme changed! 🎨',
+      fact: '🤓 The first computer mouse was made of wood.',
+      fallback: 'I don\'t understand. Try <strong>"Help"</strong>.',
+
+      proactive: {
+        default: [
+          "👋 Hi there, need some guidance?",
+          "🤖 Beep, boop. Looking for something specific?",
+          "👀 I'm here if you get lost.",
+          "✨ You can toggle Dark Mode if you prefer.",
+          "🚀 Did you know we offer 24h shipping?"
+        ],
+        shop: [
+          "🎮 Gaming or Work? Ask me for recommendations.",
+          "📉 Hesitating? Want me to show you the cheapest items?",
+          "🔥 Laptops are selling fast today. Grab one!",
+          "🔍 Use the search bar above if you can't find your model.",
+          "⌨️ We have great mechanical keyboards on sale.",
+          "🖱️ Wireless or wired mouse? I have options for both."
+        ],
+        cart: [
+          "💳 Any issues with payment? I can help.",
+          "🚚 Remember: Free shipping on qualified orders!",
+          "🛒 Almost yours! Need help finishing checkout?",
+          "🔒 Payment is 100% secure, don't worry.",
+          "🎁 Check if you need one more item for free shipping!",
+          "🏷️ If you have a promo code, now is the time."
+        ],
+        repair: [
+          "🛠️ Sorry about your device. Shall we open a ticket?",
+          "🔍 Want to check the status of a repair?",
+          "📱 Broken screen? We have expert technicians.",
+          "💻 Slow PC? Sometimes an SSD upgrade is all you need.",
+          "⏱️ Repairs usually take less than 48 hours.",
+          "👨‍🔧 Our technicians are officially certified."
+        ],
+        offers: [
+          "🎁 The 3x2 on headphones is our best deal!",
+          "⚡ Hurry! Black Friday stock is running low!",
+          "💸 Have you seen the 20% discount? It's automatic.",
+          "🔥 That graphics card is at an all-time low price.",
+          "🎧 SoundMax headphones are a steal right now.",
+          "🕒 These offers end soon, don't wait too long."
+        ],
+        purchases: [
+          "⭐ How was your purchase? We'd love a review!",
+          "📄 Need an invoice for any order?",
+          "📦 We hope you enjoy your new gadgets.",
+          "🔄 You have 30 days for returns.",
+          "🚚 You can track your shipment from here."
+        ]
+      }
+    },
+    zh: {
+      welcome: "你好！我是 ElectroBot。",
+      intro: '输入 <strong>"Help"</strong> 查看指令。',
+      help_menu: `
+        <strong>🤖 指令菜单:</strong><br>
+        🛍️ <strong>"Search [产品]"</strong> (搜索)<br>
+        🛒 <strong>"Cart"</strong> (购物车)<br>
+        💡 <strong>"Recommend"</strong> (推荐)<br>
+        🔧 <strong>"Repair"</strong> (维修状态)<br>
+        ℹ️ <strong>"Hours"</strong> (营业时间)<br>
+        ✈️ <strong>"Go home"</strong> (首页)<br>
+        🌗 <strong>"Theme"</strong> (切换主题)<br>
+        🧹 <em>"Clear"</em> (清除)
+      `,
+      shop_closed: '🕒 周一至周五 09:00 - 20:00。',
+      location: '📍 科技街 123 号。',
+      warranty: '🛡️ 3年保修，30天退货。',
+      tech_slow: '🐢 电脑慢？重启或检查硬盘。',
+      tech_broken: '🔥 请在 <a href="reparar.html">维修</a> 页面提交工单。',
+      calc_tax: (p, t) => `🧮 价格: €${p} + 税 = <strong>€${t}</strong>`,
+      nav_home: '✈️ 返回首页...',
+      nav_offers: '🎁 查看优惠！',
+      nav_shop: '🛍️ 打开商店...',
+      nav_repair: '🔧 打开维修中心...',
+      rec_title: (f) => `✨ 推荐 <strong>${f}</strong>:<br>`,
+      rec_ask: '你需要什么？游戏 (Gaming) 或 便宜 (Cheap)？',
+      search_found: (n) => `找到 ${n} 个结果:<br>`,
+      search_none: (q) => `未找到 "<strong>${q}</strong>". 📦`,
+      cart_empty: '购物车是空的。 🛒',
+      cart_status: (c) => `购物车有 <strong>${c} 件商品</strong>. <a href="carrito.html">查看</a>`,
+      login_req: '请先登录。',
+      login_open: '打开登录窗口...',
+      logout: '已退出。 👋',
+      theme_changed: '主题已更改！ 🎨',
+      fact: '🤓 第一个鼠标是木头做的。',
+      fallback: '我不明白。请输入 <strong>"Help"</strong>。',
+
+      proactive: {
+        default: [
+          "👋 你好，需要我带路吗？",
+          "🤖 哔哔。在找什么特别的东西吗？",
+          "👀 如果迷路了，我在这里等你。",
+          "✨ 你可以切换到深色模式。",
+          "🚀 你知道我们提供24小时发货吗？"
+        ],
+        shop: [
+          "🎮 游戏还是工作？我可以为您推荐。",
+          "📉 犹豫不决？想看看最便宜的吗？",
+          "🔥 今天的笔记本电脑卖得很火。抓紧！",
+          "🔍 如果找不到型号，请使用上方的搜索栏。",
+          "⌨️ 我们的机械键盘正在促销。",
+          "🖱️ 无线还是有线鼠标？我有推荐。"
+        ],
+        cart: [
+          "💳 支付有问题吗？我可以帮忙。",
+          "🚚 记住：满足条件免运费！",
+          "🛒 快是你的了！需要帮助结账吗？",
+          "🔒 支付100%安全，请放心。",
+          "🎁 看看是否还需要加一件商品以免运费！",
+          "🏷️ 如果你有优惠码，现在可以使用。"
+        ],
+        repair: [
+          "🛠️ 设备坏了？我们要开个维修单吗？",
+          "🔍 想查询维修状态吗？",
+          "📱 屏幕碎了？我们有专家。",
+          "💻 电脑慢？有时候换个硬盘就行。",
+          "⏱️ 维修通常在48小时内完成。",
+          "👨‍🔧 我们的技术人员经过官方认证。"
+        ],
+        offers: [
+          "🎁 耳机买三付二是最好的优惠！",
+          "⚡ 快点！黑色星期五库存不多了！",
+          "💸 看到20%的折扣了吗？自动应用的。",
+          "🔥 显卡价格达到了历史最低。",
+          "🎧 SoundMax 耳机现在非常划算。",
+          "🕒 优惠即将结束，不要犹豫太久。"
+        ],
+        purchases: [
+          "⭐ 购物体验如何？我们期待您的评价！",
+          "📄 需要发票吗？",
+          "📦 希望您喜欢您的新设备。",
+          "🔄 您有30天的退货期。",
+          "🚚 您可以在这里追踪发货状态。"
+        ]
+      }
+    }
+  },
+
+  init() {
+    // Recuperar configuración de idioma
+    const settings = AppStorage.getSettings();
+    const langCode = settings.language || 'es';
+
+    // Mapeo de idiomas para voz
+    const voiceLangs = { 'es': 'es-ES', 'en': 'en-US', 'zh': 'zh-CN' };
+
+    // Configuración de Voz
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = voiceLangs[langCode]; // Idioma dinámico
+      this.recognition.interimResults = false;
+      this.recognition.maxAlternatives = 1;
+
+      this.recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById('chatbot-input').value = text;
+        this.handleUserMessage();
+        this.toggleMicVisuals(false);
+      };
+
+      this.recognition.onerror = (event) => {
+        this.toggleMicVisuals(false);
+      };
+
+      this.recognition.onend = () => this.toggleMicVisuals(false);
+    }
+
+    // Historial
+    const savedHistory = localStorage.getItem('electroBotHistory');
+    if (savedHistory) {
+      this.messages = JSON.parse(savedHistory);
+    }
+
+    this.createDOM();
+    this.bindEvents();
+    this.renderInitialMessages();
+    this.startProactiveInitiative();
+  },
+  startProactiveInitiative() {
+    // --- CONFIGURACIÓN ---
+    const TIEMPO_INICIAL = 10000; // 10 segundos la primera vez
+
+    // Rango para las siguientes veces (Aleatorio entre MIN y MAX)
+    const TIEMPO_MIN = 30000; // 30 segundos
+    const TIEMPO_MAX = 90000; // 90 segundos (1 minuto y medio)
+
+    // Función para calcular tiempo aleatorio
+    const getRandomDelay = () => {
+        return Math.floor(Math.random() * (TIEMPO_MAX - TIEMPO_MIN + 1) + TIEMPO_MIN);
+    };
+
+    const triggerLogic = () => {
+        // Solo molestamos si el chat está CERRADO
+        if (!this.isOpen) {
+
+            // 1. DETECTAR CONTEXTO
+            const path = window.location.pathname;
+            let contextKey = 'default';
+
+            if (path.includes('comprar')) contextKey = 'shop';
+            else if (path.includes('carrito')) contextKey = 'cart';
+            else if (path.includes('reparar')) contextKey = 'repair';
+            else if (path.includes('ofertas')) contextKey = 'offers';
+            else if (path.includes('mis-compras')) contextKey = 'purchases';
+
+            // 2. OBTENER IDIOMA
+            const settings = AppStorage.getSettings();
+            const lang = settings.language || 'es';
+
+            // 3. SELECCIONAR MENSAJE ALEATORIO
+            if (this.i18n[lang] && this.i18n[lang].proactive) {
+                const messagesList = this.i18n[lang].proactive[contextKey] || this.i18n[lang].proactive['default'];
+                const randomMessage = messagesList[Math.floor(Math.random() * messagesList.length)];
+
+                // 4. EJECUTAR
+                console.log(`🤖 ElectroBot dice: "${randomMessage}" (Contexto: ${contextKey})`);
+                this.toggle();
+                this.addMessage(randomMessage, 'bot');
+
+                if (this.voiceEnabled) this.speak(randomMessage);
+                else if(typeof Feedback !== 'undefined') Feedback.playSound('info');
+            }
+        } else {
+            console.log("🤖 El bot quería salir, pero ya estaba abierto. Esperando al siguiente turno.");
+        }
+
+        // --- REPROGRAMACIÓN ALEATORIA ---
+        const nextDelay = getRandomDelay();
+        console.log(`🕒 Próximo intento del bot en: ${nextDelay/1000} segundos.`);
+        this.proactiveTimer = setTimeout(triggerLogic, nextDelay);
+    };
+
+    // Primera ejecución fija
+    console.log(`🕒 Bot programado para salir en ${TIEMPO_INICIAL/1000} segundos.`);
+    this.proactiveTimer = setTimeout(triggerLogic, TIEMPO_INICIAL);
+  },
+
+  // Helper para obtener textos en el idioma actual
+  t(key, param1, param2) {
+    const lang = AppStorage.getSettings().language || 'es';
+    const text = this.i18n[lang][key] || this.i18n['es'][key]; // Fallback a español
+    if (typeof text === 'function') return text(param1, param2);
+    return text;
+  },
+
+  createDOM() {
+    if (document.getElementById('chatbot-toggle-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'chatbot-toggle-btn';
+    btn.innerHTML = '💬';
+    btn.title = 'Ayuda Virtual';
+    btn.style.zIndex = "9999";
+    document.body.appendChild(btn);
+
+    const chatWindow = document.createElement('div');
+    chatWindow.id = 'chatbot-window';
+    chatWindow.className = 'chatbot-window';
+
+    const voiceIcon = this.voiceEnabled ? '🔊' : '🔇';
+
+    chatWindow.innerHTML = `
+      <div class="chatbot-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">🤖</span>
+          <span>ElectroBot</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+          <span id="chatbot-voice-toggle" title="Voz">${voiceIcon}</span>
+          <span id="chatbot-close" style="cursor:pointer; font-size:24px; line-height:1;">&times;</span>
+        </div>
+      </div>
+
+      <div class="chatbot-messages" id="chatbot-messages"></div>
+
+      <form class="chatbot-input-area" id="chatbot-form">
+        <button type="button" id="chatbot-mic-btn" title="Micro">🎙️</button>
+        <input type="text" id="chatbot-input" placeholder="..." autocomplete="off">
+        <button type="submit">➤</button>
+      </form>
+
+      <div class="chatbot-resize-handle"></div>
+    `;
+    document.body.appendChild(chatWindow);
+  },
+
+  renderInitialMessages() {
+    const container = document.getElementById('chatbot-messages');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (this.messages.length === 0) {
+      const user = AppStorage.getUser();
+      // Personalizamos saludo
+      const baseWelcome = this.t('welcome');
+      const welcome = user ? `${baseWelcome} ${user.name}!` : baseWelcome;
+
+      this.appendMessageToDOM(welcome, 'bot');
+      this.appendMessageToDOM(this.t('intro'), 'bot');
+    } else {
+      this.messages.forEach(msg => this.appendMessageToDOM(msg.text, msg.sender));
+      setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    }
+  },
+
+  bindEvents() {
+    const toggleBtn = document.getElementById('chatbot-toggle-btn');
+    const closeBtn = document.getElementById('chatbot-close');
+    const voiceToggle = document.getElementById('chatbot-voice-toggle');
+    const micBtn = document.getElementById('chatbot-mic-btn');
+    const form = document.getElementById('chatbot-form');
+
+    if (toggleBtn) toggleBtn.addEventListener('click', () => this.toggle());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.toggle());
+
+    if (voiceToggle) {
+      voiceToggle.addEventListener('click', () => {
+        this.voiceEnabled = !this.voiceEnabled;
+        voiceToggle.textContent = this.voiceEnabled ? '🔊' : '🔇';
+        if(this.voiceEnabled) this.speak('OK');
+        else window.speechSynthesis.cancel();
+      });
+    }
+
+    if (micBtn) {
+      micBtn.addEventListener('click', () => {
+        if (this.recognition) {
+          try {
+            this.recognition.start();
+            this.toggleMicVisuals(true);
+          } catch (e) {}
+        } else {
+          alert("Micro no soportado.");
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleUserMessage();
+      });
+    }
+  },
+
+  toggleMicVisuals(isListening) {
+    const btn = document.getElementById('chatbot-mic-btn');
+    if(!btn) return;
+    if (isListening) btn.classList.add('listening');
+    else btn.classList.remove('listening');
+  },
+
+  toggle() {
+    const chatWindow = document.getElementById('chatbot-window');
+    this.isOpen = !this.isOpen;
+    if (this.isOpen) {
+      chatWindow.classList.add('active');
+      const input = document.getElementById('chatbot-input');
+      if(input) input.focus();
+      const container = document.getElementById('chatbot-messages');
+      if(container) container.scrollTop = container.scrollHeight;
+    } else {
+      chatWindow.classList.remove('active');
+      window.speechSynthesis.cancel();
+    }
+  },
+
+  handleUserMessage() {
+    const input = document.getElementById('chatbot-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    this.addMessage(text, 'user');
+    input.value = '';
+
+    setTimeout(() => {
+      const reply = this.processIntelligence(text);
+      if (reply) {
+        this.addMessage(reply, 'bot');
+        if (this.voiceEnabled) this.speak(reply);
+      }
+    }, 600);
+  },
+
+  speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+
+    // Elegir voz según idioma
+    const langCode = AppStorage.getSettings().language || 'es';
+    const voiceMap = { 'es': 'es-ES', 'en': 'en-US', 'zh': 'zh-CN' };
+
+    // 1. Eliminar etiquetas HTML (como <strong>, <br>, etc.)
+    let cleanText = text.replace(/<[^>]*>?/gm, '');
+
+    // 2. Eliminar Emojis para que no los lea 🚫😀
+    // Este regex cubre la gran mayoría de rangos de emojis
+    cleanText = cleanText.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+
+    // 3. Limpiar espacios extra que hayan podido quedar tras borrar los emojis
+    cleanText = cleanText.replace(/\s+/g, ' ').trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = voiceMap[langCode];
+    window.speechSynthesis.speak(utterance);
+  },
+
+  addMessage(text, sender) {
+    this.messages.push({ text, sender });
+    localStorage.setItem('electroBotHistory', JSON.stringify(this.messages));
+    this.appendMessageToDOM(text, sender);
+  },
+
+  appendMessageToDOM(text, sender) {
+    const container = document.getElementById('chatbot-messages');
+    if (!container) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${sender}`;
+    msgDiv.innerHTML = text;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+  },
+
+  // ============================================================
+  // CEREBRO MULTILENGUAJE
+  // ============================================================
+
+  cleanText(text) {
+    return text.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
+      .trim();
+  },
+
+  hasKeyword(cleanInput, keywords) {
+    return keywords.some(word => cleanInput.includes(word));
+  },
+
+  processIntelligence(rawText) {
+    const text = this.cleanText(rawText);
+    const user = AppStorage.getUser();
+
+    // 1. LIMPIAR
+    if (this.hasKeyword(text, ['borrar', 'limpiar', 'clear', 'vaciar', 'reset', 'clean'])) {
+      this.messages = [];
+      localStorage.removeItem('electroBotHistory');
+      this.renderInitialMessages();
+      return null;
+    }
+
+    // 2. AYUDA
+    if (this.hasKeyword(text, ['ayuda', 'help', 'comandos', 'menu', 'bangzhu'])) {
+      return this.t('help_menu');
+    }
+
+    // 3. NAVEGACIÓN
+    if (this.hasKeyword(text, ['ir a', 'go to', 'volver', 'back', 'qu'])) {
+      if (text.includes('inicio') || text.includes('home') || text.includes('shouye')) {
+        window.location.href = 'index.html'; return this.t('nav_home');
+      }
+      if (text.includes('oferta') || text.includes('offer') || text.includes('youhui')) {
+        window.location.href = 'ofertas.html'; return this.t('nav_offers');
+      }
+      if (text.includes('compra') || text.includes('shop') || text.includes('store') || text.includes('mai')) {
+        window.location.href = 'comprar.html'; return this.t('nav_shop');
+      }
+      if (text.includes('repara') || text.includes('repair') || text.includes('weixiu')) {
+        window.location.href = 'reparar.html'; return this.t('nav_repair');
+      }
+    }
+
+    // 4. REPARACIONES
+    if (this.hasKeyword(text, ['repara', 'fix', 'status', 'taller', 'estado'])) {
+      const repairs = state.repairRequests;
+      if (!repairs || repairs.length === 0) return '...'; // Simplificado, idealmente usaríamos trads aquí también
+      let msg = '🔧:<br>';
+      repairs.forEach(r => msg += `• ${r.device}: ${r.status}<br>`);
+      return msg;
+    }
+
+    // 5. BÚSQUEDA (Ahora detecta ES, EN, ZH)
+    if (this.hasKeyword(text, ['busca', 'search', 'find', 'precio', 'price', 'buy', 'comprar', 'sousuo', 'zhao'])) {
+      // Palabras 'stop' en 3 idiomas
+      const stopWords = ['buscar', 'search', 'find', 'un', 'a', 'el', 'the', 'precio', 'price', 'comprar', 'buy', 'de', 'of', 'sousuo'];
+      const words = text.split(' ');
+      const importantWords = words.filter(word => !stopWords.includes(word));
+      let query = importantWords.join(' ').trim();
+
+      if (query.length < 2) return this.t('search_none', '...');
+
+      const found = PRODUCTS.filter(p => {
+        const pName = this.cleanText(p.name);
+        return pName.includes(query);
+      });
+
+      if (found.length > 0) {
+        let resp = this.t('search_found', found.length);
+        found.slice(0, 2).forEach(p => {
+          resp += `<div style="margin-top:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">
+            <strong>${p.name}</strong><br>
+            <span style="color:var(--accent);">€${p.price}</span>
+            <button class="small-btn" style="width:100%; margin-top:5px; font-size:11px;" onclick="Products.openModal(${p.id})">Ver / View</button>
+          </div>`;
+        });
+        return resp;
+      }
+      return this.t('search_none', query);
+    }
+
+    // 6. OTROS COMANDOS
+    if (this.hasKeyword(text, ['carrito', 'cart', 'cesta', 'pagar', 'pay', 'gouwuche'])) {
+      const count = state.cart.length;
+      if (count === 0) return this.t('cart_empty');
+      return this.t('cart_status', count);
+    }
+
+    if (this.hasKeyword(text, ['pedido', 'order', 'history', 'dingdan'])) return user ? `📦 ${state.purchases.length}` : this.t('login_req');
+    if (this.hasKeyword(text, ['iniciar', 'login', 'sign in', 'denglu'])) { Auth.openModal(); return this.t('login_open'); }
+    if (this.hasKeyword(text, ['cerrar', 'logout', 'sign out', 'tuichu'])) { Auth.logout(); return this.t('logout'); }
+
+    if (this.hasKeyword(text, ['tema', 'theme', 'dark', 'light', 'zhuti'])) { document.getElementById('theme-toggle-btn')?.click(); return this.t('theme_changed'); }
+
+    if (this.hasKeyword(text, ['horario', 'hours', 'time'])) return this.t('shop_closed');
+    if (this.hasKeyword(text, ['donde', 'where', 'location'])) return this.t('location');
+
+    if (this.hasKeyword(text, ['hola', 'hello', 'hi', 'nihao'])) return this.t('welcome');
+
+    return this.t('fallback');
+  }
+};
 // =============================================
 // INICIALIZACIÓN PRINCIPAL
 // =============================================
@@ -3418,6 +4082,7 @@ document.addEventListener('DOMContentLoaded', function() {
   Cart.init();
   Products.init();
   PaymentModal.init();
+  Chatbot.init();
 
   // Inicializar modal de pago si existe
   if (document.getElementById('payment-modal')) {
