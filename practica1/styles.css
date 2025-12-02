@@ -3566,7 +3566,7 @@ body.color-mode-tritanopia #login-sidebar-link:hover {
 /* Ventana del chat - AHORA REDIMENSIONABLE */
 .chatbot-window {
   position: fixed;
-  bottom: 210px;
+  bottom: 170px;
   right: 25px;
 
   /* Tamaño inicial */
@@ -3793,4 +3793,98 @@ body.color-mode-tritanopia #login-sidebar-link:hover {
   cursor: pointer;
   font-size: 18px;
   margin-right: 10px;
+}
+/* ============================================= */
+/* ESTILOS DE NAVEGACIÓN CON GAMEPAD (MANDO)     */
+/* ============================================= */
+
+/* Clase que se aplica al elemento enfocado por el mando */
+.gamepad-hover {
+  outline: none;
+  position: relative;
+  z-index: 50;
+  /* Efecto de borde brillante estilo neón */
+  box-shadow: 0 0 0 4px var(--accent), 0 0 20px var(--accent) !important;
+  transform: scale(1.02);
+  transition: all 0.1s ease;
+  border-radius: 8px; /* Asegurar bordes redondeados */
+}
+
+/* Ajustes específicos para las tarjetas de producto */
+.card.gamepad-hover {
+  border-color: var(--accent) !important;
+  transform: translateY(-5px) scale(1.02) !important;
+}
+
+/* Ajustes para inputs */
+input.gamepad-hover,
+textarea.gamepad-hover,
+select.gamepad-hover {
+  border-color: var(--accent) !important;
+  background: rgba(110, 231, 183, 0.1) !important;
+}
+
+/* Efecto de pulsación (cuando presionas X) */
+.gamepad-click {
+  transform: scale(0.95) !important;
+  box-shadow: 0 0 0 2px #fff !important;
+  filter: brightness(1.5);
+}
+
+/* ============================================= */
+/* ESTILOS CONTROL POR GESTOS (MODO AJUSTES)     */
+/* ============================================= */
+
+.gesture-interface {
+  position: fixed;
+  top: 80px; /* Debajo del header */
+  left: 20px;
+  width: 320px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  padding: 10px;
+  z-index: 10000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  animation: slideInRight 0.5s ease;
+}
+
+.output_canvas {
+  width: 100%;
+  border-radius: 12px;
+  transform: scaleX(-1); /* Efecto espejo para que sea natural */
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 5px;
+}
+
+.gesture-status {
+  text-align: center;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.gesture-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.gesture-legend div {
+  background: rgba(255,255,255,0.08);
+  padding: 4px 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }

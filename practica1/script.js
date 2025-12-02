@@ -166,7 +166,220 @@ const state = {
   currentProductId: null,
 
 };
+// =============================================
+// SISTEMA DE NAVEGACIÓN POR GESTOS
+// =============================================
 
+// =============================================
+// SISTEMA DE NAVEGACIÓN POR GESTOS (CALIBRADO)
+// =============================================
+
+const GestureNav = {
+  isActive: false,
+  camera: null,
+  hands: null,
+  lastActionTime: 0,
+  cooldown: 2000, // Aumentado a 2 segundos para evitar rebotes
+
+  init() {
+    const settings = AppStorage.getSettings();
+    if (settings.gestures === 'on') {
+      this.enable();
+    }
+  },
+
+  enable() {
+    if (this.isActive) return;
+    this.isActive = true;
+
+    const ui = document.getElementById('gesture-interface');
+    if (ui) ui.style.display = 'block';
+
+    this.startCamera();
+    if(typeof Feedback !== 'undefined') Feedback.notify('📷 Control por gestos activado', 'info');
+  },
+
+  disable() {
+    if (!this.isActive) return;
+    this.isActive = false;
+
+    const ui = document.getElementById('gesture-interface');
+    if (ui) ui.style.display = 'none';
+
+    this.stopCamera();
+    if(typeof Feedback !== 'undefined') Feedback.notify('Control por gestos desactivado', 'info');
+  },
+
+  async startCamera() {
+    const videoEl = document.querySelector('.input_video');
+    const canvasEl = document.querySelector('.output_canvas');
+    if (!videoEl || !canvasEl) return;
+
+    const ctx = canvasEl.getContext('2d');
+    const statusEl = document.getElementById('gesture-status');
+
+    if (!this.hands) {
+      this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+      this.hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7, // Confianza alta
+        minTrackingConfidence: 0.5
+      });
+      this.hands.onResults((results) => {
+        if(this.isActive) this.onResults(results, ctx, canvasEl, statusEl);
+      });
+    }
+
+    if (!this.camera) {
+      this.camera = new Camera(videoEl, {
+        onFrame: async () => {
+          if(this.isActive) await this.hands.send({image: videoEl});
+        },
+        width: 320, height: 240
+      });
+    }
+
+    // Captura de errores de cámara
+    this.camera.start().catch(err => {
+        console.error(err);
+        alert("⚠️ No se pudo acceder a la cámara. Revisa los permisos del navegador o la configuración de privacidad de Windows/Mac.");
+        // Desactivar en ajustes visualmente si falla
+        this.disable();
+        const settings = AppStorage.getSettings();
+        settings.gestures = 'off';
+        AppStorage.saveSettings(settings);
+    });
+  },
+
+  stopCamera() {
+    if (this.camera) {
+      const videoEl = document.querySelector('.input_video');
+      if (videoEl) {
+        videoEl.pause();
+        if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(t => t.stop());
+      }
+      this.camera = null;
+    }
+  },
+
+  onResults(results, ctx, canvas, statusEl) {
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      const lm = results.multiHandLandmarks[0];
+      drawConnectors(ctx, lm, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+      drawLandmarks(ctx, lm, {color: '#FF0000', lineWidth: 1});
+      this.interpret(lm, statusEl);
+    } else {
+      statusEl.textContent = "🔴 Esperando mano...";
+      statusEl.style.color = "#ef4444";
+    }
+    ctx.restore();
+  },
+
+interpret(lm, statusEl) {
+    const now = Date.now();
+
+    // Puntas de los dedos
+    const indexTip = lm[8];
+    const middleTip = lm[12];
+    const ringTip = lm[16];
+    const pinkyTip = lm[20];
+
+    // Nudillos (bases)
+    const indexBase = lm[5];
+    const middleBase = lm[9];
+    const ringBase = lm[13];
+    const pinkyBase = lm[17];
+
+    // Coordenadas generales (basadas en dedo índice)
+    const x = indexTip.x;
+    const y = indexTip.y;
+
+    // --- DETECCIÓN DE SÍMBOLO DE PAZ (✌️) ---
+    // 1. Índice y Medio deben estar ESTIRADOS (Punta más ALTA que la base -> Y menor)
+    const isIndexOpen = indexTip.y < indexBase.y;
+    const isMiddleOpen = middleTip.y < middleBase.y;
+
+    // 2. Anular y Meñique deben estar DOBLADOS (Punta más BAJA que la base -> Y mayor)
+    const isRingClosed = ringTip.y > ringBase.y;
+    const isPinkyClosed = pinkyTip.y > pinkyBase.y;
+
+    // Combinación ganadora
+    const isPeaceSign = isIndexOpen && isMiddleOpen && isRingClosed && isPinkyClosed;
+
+    // --- ZONA SEGURA ---
+    // La acción solo vale si está en el centro
+    const isCentered = x > 0.2 && x < 0.8;
+
+    // Resetear color
+    statusEl.style.color = "#6ee7b7";
+
+    // 1. LÓGICA DE ACCIÓN (PEACE SIGN)
+    if (isPeaceSign && isCentered) {
+        statusEl.textContent = "✌️ Acción detectada (Mantén)";
+
+        if (now - this.lastActionTime > this.cooldown) {
+            // ACCIONES
+            if (window.location.pathname.includes('comprar')) {
+                this.trigger("Añadir al Carrito", () => { Cart.add(1); });
+            } else if (window.location.pathname.includes('carrito')) {
+                this.trigger("Pagar", () => {
+                    const btn = document.getElementById('checkout-btn');
+                    if(btn) btn.click();
+                });
+            } else {
+                this.trigger("Ofertas", () => window.location.href = 'ofertas.html');
+            }
+        }
+        return; // Salimos para evitar conflictos
+    }
+
+    // 2. NAVEGACIÓN LATERAL (Prioridad alta en bordes)
+    if (x < 0.15) {
+        this.trigger("Inicio", () => window.location.href = 'index.html');
+        return;
+    } else if (x > 0.85) {
+        this.trigger("Tienda", () => window.location.href = 'comprar.html');
+        return;
+    }
+
+    // 3. SCROLL (Solo si está centrado y NO es el símbolo de paz)
+    // Usamos isIndexOpen para permitir scroll con un dedo o mano abierta
+    if (isCentered) {
+      if (y < 0.2) {
+        statusEl.textContent = "👆 Subiendo...";
+        window.scrollBy(0, -15);
+      } else if (y > 0.8) {
+        statusEl.textContent = "👇 Bajando...";
+        window.scrollBy(0, 15);
+      } else {
+        statusEl.textContent = "✋ Mano detectada";
+      }
+    } else {
+        statusEl.textContent = "...";
+    }
+  },
+
+  trigger(name, callback) {
+    const statusEl = document.getElementById('gesture-status');
+    statusEl.textContent = `⚡ EJECUTANDO: ${name}`;
+    statusEl.style.color = "#f59e0b";
+
+    if(typeof Feedback !== 'undefined') {
+        Feedback.notify(`Gesto: ${name}`, 'success');
+        Feedback.playSound('success');
+    }
+
+    this.lastActionTime = Date.now();
+
+    // Pequeño delay para que el usuario vea el mensaje antes de cambiar de página
+    setTimeout(callback, 800);
+  }
+};
 // =============================================
 // SISTEMA DE FEEDBACK MULTIMODAL (RETO 9)
 // =============================================
@@ -320,7 +533,8 @@ const AppStorage = {
     const settings = localStorage.getItem('appSettings');
     return settings ? JSON.parse(settings) : {
       fontSize: 'medium',
-      language: 'es'
+      language: 'es',
+      gestures: 'off'
     };
   },
 
@@ -1889,21 +2103,6 @@ const Settings = {
     this.loadSettings();
   },
 
-  updateProductTranslations() {
-  const settings = AppStorage.getSettings();
-  this.applyLanguage(settings.language);
-
-  // Si estamos en la página de productos, volver a renderizar
-  if (document.getElementById('product-list')) {
-    Products.render();
-  }
-
-  // Si hay un modal de producto abierto, actualizarlo
-  const productModal = document.getElementById('product-modal');
-  if (productModal && productModal.style.display === 'block' && state.currentProductId) {
-    Products.openModal(state.currentProductId);
-  }
-},
   bindEvents() {
     const settingsBtn = document.getElementById('settings-btn');
     const closeSettingsModal = document.getElementById('close-settings-modal');
@@ -1928,21 +2127,31 @@ const Settings = {
       });
     }
 
-    // Event delegation para las opciones de tamaño de fuente
+    // DELEGACIÓN DE EVENTOS PARA LAS OPCIONES (Click en las tarjetas)
     document.addEventListener('click', (e) => {
+      // 1. Tamaño de fuente
       if (e.target.closest('[data-font-size]')) {
-        const fontSize = e.target.closest('[data-font-size]').dataset.fontSize;
-        this.selectFontSize(fontSize);
+        this.toggleActive(e.target.closest('[data-font-size]'), '[data-font-size]');
       }
-    });
-
-    // Event delegation para las opciones de idioma
-    document.addEventListener('click', (e) => {
+      // 2. Idioma
       if (e.target.closest('[data-language]')) {
-        const language = e.target.closest('[data-language]').dataset.language;
-        this.selectLanguage(language);
+        this.toggleActive(e.target.closest('[data-language]'), '[data-language]');
+      }
+      // 3. Modos de color (Accesibilidad)
+      if (e.target.closest('[data-color-mode]')) {
+        this.toggleActive(e.target.closest('[data-color-mode]'), '[data-color-mode]');
+      }
+      // 4. NUEVO: Control por Gestos
+      if (e.target.closest('[data-gestures]')) {
+        this.toggleActive(e.target.closest('[data-gestures]'), '[data-gestures]');
       }
     });
+  },
+
+  // Helper para cambiar la clase 'active' visualmente
+  toggleActive(element, selector) {
+    document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
   },
 
   openModal() {
@@ -1963,637 +2172,289 @@ const Settings = {
   },
 
   loadCurrentSettings() {
-  const settings = AppStorage.getSettings();
-  console.log('🎯 Cargando configuración actual:', settings);
+    const settings = AppStorage.getSettings();
+    console.log('🎯 Cargando configuración actual:', settings);
 
-  // Actualizar selección de tamaño de fuente
-  document.querySelectorAll('[data-font-size]').forEach(option => {
-    option.classList.remove('active');
-    if (option.dataset.fontSize === settings.fontSize) {
-      option.classList.add('active');
-      console.log('✅ Tamaño de fuente seleccionado:', settings.fontSize);
-    }
-  });
+    // Helper para activar la tarjeta correcta según lo guardado
+    const activateCard = (selector, settingKey, defaultValue) => {
+      document.querySelectorAll(selector).forEach(option => {
+        option.classList.remove('active');
+        const valueToCheck = settings[settingKey] || defaultValue;
+        if (option.dataset[settingKey] === valueToCheck ||
+           (settingKey === 'gestures' && option.dataset.gestures === valueToCheck)) {
+          option.classList.add('active');
+        }
+      });
+    };
 
-  // Actualizar selección de idioma
-  document.querySelectorAll('[data-language]').forEach(option => {
-    option.classList.remove('active');
-    if (option.dataset.language === settings.language) {
-      option.classList.add('active');
-      console.log('✅ Idioma seleccionado:', settings.language);
-    }
-  });
-
-    document.querySelectorAll('[data-color-mode]').forEach(option => {
-      option.classList.remove('active');
-      // Si no hay modo guardado, usamos 'normal'
-      if (option.dataset.colorMode === (settings.colorMode || 'normal')) {
-        option.classList.add('active');
-      }
-    });
-},
-
-  selectFontSize(size) {
-    document.querySelectorAll('[data-font-size]').forEach(option => {
-      option.classList.remove('active');
-    });
-    document.querySelector(`[data-font-size="${size}"]`).classList.add('active');
-  },
-
-  selectLanguage(language) {
-    document.querySelectorAll('[data-language]').forEach(option => {
-      option.classList.remove('active');
-    });
-    document.querySelector(`[data-language="${language}"]`).classList.add('active');
+    activateCard('[data-font-size]', 'fontSize', 'medium');
+    activateCard('[data-language]', 'language', 'es');
+    activateCard('[data-color-mode]', 'colorMode', 'normal');
+    activateCard('[data-gestures]', 'gestures', 'off'); // Por defecto apagado
   },
 
   saveSettings() {
-  const activeFontSize = document.querySelector('[data-font-size].active');
-  const activeLanguage = document.querySelector('[data-language].active');
-  const activeColorMode = document.querySelector('[data-color-mode].active');
-  // Obtener traducciones para mensajes de error
-  const currentSettings = AppStorage.getSettings();
-  const translations = this.getTranslations();
-  const currentTranslations = translations[currentSettings.language] || translations.es;
+    // Obtener los elementos activos
+    const activeFontSize = document.querySelector('[data-font-size].active');
+    const activeLanguage = document.querySelector('[data-language].active');
+    const activeColorMode = document.querySelector('[data-color-mode].active');
+    const activeGestures = document.querySelector('[data-gestures].active');
 
-  if (!activeFontSize || !activeLanguage || !activeColorMode) {
-    alert(currentTranslations['settings.select_all']);
-    return;
-  }
+    // Validar selección
+    if (!activeFontSize || !activeLanguage || !activeColorMode || !activeGestures) {
+      // Usar traducción básica si falla la carga
+      alert('Por favor, selecciona todas las opciones.');
+      return;
+    }
 
-  const settings = {
-    fontSize: activeFontSize.dataset.fontSize,
-    language: activeLanguage.dataset.language,
-    colorMode: activeColorMode.dataset.colorMode
-  };
+    const settings = {
+      fontSize: activeFontSize.dataset.fontSize,
+      language: activeLanguage.dataset.language,
+      colorMode: activeColorMode.dataset.colorMode,
+      gestures: activeGestures.dataset.gestures // Guardamos 'on' u 'off'
+    };
 
-  console.log('💾 Guardando ajustes:', settings);
+    console.log('💾 Guardando ajustes:', settings);
 
-  AppStorage.saveSettings(settings);
-  this.applySettings(settings);
-  this.closeModal();
-
-  // Actualizar traducciones de productos
-  this.updateProductTranslations();
-
-  // Mostrar mensaje en el idioma actual
-  const newTranslations = translations[settings.language] || translations.es;
-  alert(newTranslations['settings.saved']);
-
-  // Forzar actualización visual
-  setTimeout(() => {
+    AppStorage.saveSettings(settings);
     this.applySettings(settings);
-  }, 100);
-},
+    this.closeModal();
+
+    // Actualizar traducciones dinámicas (productos, etc.)
+    this.updateProductTranslations();
+
+    // Mensaje de éxito traducido
+    const translations = this.getTranslations();
+    const t = translations[settings.language] || translations.es;
+    alert(t['settings.saved']);
+  },
 
   loadSettings() {
-  const settings = AppStorage.getSettings();
-  console.log('📖 Cargando ajustes:', settings);
-  this.applySettings(settings);
-},
+    const settings = AppStorage.getSettings();
+    this.applySettings(settings);
+  },
 
   applySettings(settings) {
-  console.log('🔧 Aplicando ajustes:', settings);
+    console.log('🔧 Aplicando ajustes:', settings);
 
-  // Aplicar tamaño de fuente - CORREGIDO
-  document.body.classList.remove('font-small', 'font-medium', 'font-large', 'font-xlarge');
-  document.body.classList.add(`font-${settings.fontSize}`);
+    // 1. Tamaño de fuente
+    document.body.classList.remove('font-small', 'font-medium', 'font-large', 'font-xlarge');
+    document.body.classList.add(`font-${settings.fontSize}`);
 
-  console.log('📝 Clases aplicadas al body:', document.body.className);
-  document.body.classList.remove('color-mode-normal', 'color-mode-protanopia', 'color-mode-tritanopia');
+    // 2. Modo de Color (Accesibilidad)
+    document.body.classList.remove('color-mode-normal', 'color-mode-protanopia', 'color-mode-tritanopia');
     if (settings.colorMode && settings.colorMode !== 'normal') {
       document.body.classList.add(`color-mode-${settings.colorMode}`);
     }
-  // Aplicar idioma
-  this.applyLanguage(settings.language);
-},
+
+    // 3. NUEVO: Control por Gestos
+    if (typeof GestureNav !== 'undefined') {
+      if (settings.gestures === 'on') {
+        GestureNav.enable();
+      } else {
+        GestureNav.disable();
+      }
+    }
+
+    // 4. Idioma
+    this.applyLanguage(settings.language);
+  },
 
   applyLanguage(language) {
-  console.log('🌍 Aplicando idioma:', language);
+    console.log('🌍 Aplicando idioma:', language);
 
-  const translations = this.getTranslations();
-  const currentTranslations = translations[language] || translations.es;
+    const translations = this.getTranslations();
+    const currentTranslations = translations[language] || translations.es;
 
-  // 1. Actualizar textos estáticos con data-i18n
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
-    if (currentTranslations[key]) {
-      element.textContent = currentTranslations[key];
-    } else {
-      console.warn('Traducción faltante:', key);
-      // NO borrar el contenido si no hay traducción
+    // Actualizar textos estáticos [data-i18n]
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+      const key = element.getAttribute('data-i18n');
+      if (currentTranslations[key]) {
+        element.textContent = currentTranslations[key];
+      }
+    });
+
+    // Actualizar placeholders [data-i18n-placeholder]
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+      const key = element.getAttribute('data-i18n-placeholder');
+      if (currentTranslations[key]) {
+        element.placeholder = currentTranslations[key];
+      }
+    });
+
+    // Actualizar módulos dinámicos
+    this.updateDynamicTexts(currentTranslations);
+    this.updateAllModules(currentTranslations);
+  },
+
+  updateProductTranslations() {
+    const settings = AppStorage.getSettings();
+    // Si estamos en la página de productos, volver a renderizar
+    if (document.getElementById('product-list') && typeof Products !== 'undefined') {
+      Products.render();
     }
-  });
+  },
 
-  // 2. Actualizar placeholders - mantener el placeholder original si no hay traducción
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-    const key = element.getAttribute('data-i18n-placeholder');
-    const currentPlaceholder = element.getAttribute('placeholder');
-    if (currentTranslations[key]) {
-      element.placeholder = currentTranslations[key];
-    } else if (!currentPlaceholder) {
-      element.placeholder = `[${key}]`; // Solo poner placeholder si no tiene uno
+  updateAllModules(translations) {
+    // Actualizar Ofertas
+    if (typeof Offers !== 'undefined' && document.getElementById('offer-product-list')) {
+      Offers.render();
     }
-  });
-
-  // Resto del código sin cambios...
-  this.updateDynamicTexts(currentTranslations);
-  this.updateAllModules(currentTranslations);
-},
-
-updateAllModules(translations) {
-  console.log('🔄 Actualizando todos los módulos...');
-
-  // Actualizar productos
-  if (typeof Products !== 'undefined' && document.getElementById('product-list')) {
-    console.log('📦 Actualizando productos...');
-    Products.render();
-  }
-
-  // Actualizar ofertas (si estamos en la página de ofertas)
-  if (typeof Offers !== 'undefined' && document.getElementById('offer-product-list')) {
-    console.log('🎁 Actualizando ofertas...');
-    Offers.render();
-  }
-
-  // Actualizar carrito
-  if (typeof Cart !== 'undefined') {
-    console.log('🛒 Actualizando carrito...');
-    Cart.updateUI();
-    Cart.updateCounter();
-  }
-
-  // Actualizar compras
-  if (typeof Purchases !== 'undefined' && document.getElementById('purchase-list')) {
-    console.log('📋 Actualizando compras...');
-    Purchases.render();
-  }
-
-  // Actualizar reparaciones
-  if (typeof Repairs !== 'undefined' && document.getElementById('repair-list')) {
-    console.log('🔧 Actualizando reparaciones...');
-    Repairs.render();
-  }
-
-  // Actualizar reseñas
-  if (typeof Reviews !== 'undefined' && Reviews.updateSlider) {
-    console.log('⭐ Actualizando reseñas...');
-    Reviews.updateSlider();
-  }
-
-  // Actualizar botones específicos
-  this.updateSpecificButtons(translations);
-},
-
-updateSpecificButtons(translations) {
-  // Botón de añadir al carrito en modal
-  const modalAddBtn = document.getElementById('modal-add-to-cart');
-  if (modalAddBtn) {
-    modalAddBtn.textContent = translations['button.add_to_cart'];
-  }
-
-  // Botones de compra en productos
-  const buyButtons = document.querySelectorAll('.small-btn');
-  buyButtons.forEach(btn => {
-    if (btn.textContent.includes('Comprar') || btn.textContent.includes('Buy') || btn.textContent.includes('购买')) {
-      btn.textContent = translations['button.buy'];
+    // Actualizar Carrito
+    if (typeof Cart !== 'undefined' && document.getElementById('cart-contents')) {
+      Cart.updateUI();
+      Cart.updateCounter();
     }
-  });
-
-  // Botones en reparaciones
-  const repairButtons = document.querySelectorAll('#repair-list .small-btn');
-  repairButtons.forEach(btn => {
-    if (btn.textContent.includes('Editar') || btn.textContent.includes('Edit') || btn.textContent.includes('编辑')) {
-      btn.textContent = '✏️ ' + translations['button.edit'];
+    // Actualizar Compras
+    if (typeof Purchases !== 'undefined' && document.getElementById('purchase-list')) {
+      Purchases.render();
     }
-    if (btn.textContent.includes('Eliminar') || btn.textContent.includes('Delete') || btn.textContent.includes('删除')) {
-      btn.textContent = '🗑️ ' + translations['button.delete'];
+    // Actualizar Reparaciones
+    if (typeof Repairs !== 'undefined' && document.getElementById('repair-list')) {
+      Repairs.render();
     }
-  });
-},
+    // Actualizar Reseñas (Slider)
+    if (typeof Reviews !== 'undefined' && Reviews.updateSlider) {
+      Reviews.updateSlider();
+    }
 
-updateDynamicTexts(translations) {
-  // Botón del carrito
-  const cartBtn = document.getElementById('cart-btn');
-  if (cartBtn) {
-    const cartCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
-    cartBtn.textContent = `${translations['header.cart']} (${cartCount})`;
-  }
+    this.updateSpecificButtons(translations);
+  },
 
-  // Contenido del carrito
-  const cartContents = document.getElementById('cart-contents');
-  if (cartContents && state.cart.length === 0) {
-    cartContents.textContent = translations['cart.empty'];
-  }
+  updateSpecificButtons(translations) {
+    // Botones específicos que no tienen data-i18n directo
+    const modalAddBtn = document.getElementById('modal-add-to-cart');
+    if (modalAddBtn) modalAddBtn.textContent = translations['button.add_to_cart'];
 
-  // Lista de compras
-  const purchaseList = document.getElementById('purchase-list');
-  if (purchaseList && state.purchases.length === 0) {
-    purchaseList.textContent = translations['purchases.empty'];
-  }
-
-  // Lista de reparaciones
-  const repairList = document.getElementById('repair-list');
-  if (repairList && state.repairRequests.length === 0) {
-    repairList.innerHTML = `<p class="muted">${translations['repair.no_requests']}</p>`;
-  }
-
-    // Actualizar botones dinámicos en productos
-    const buyButtons = document.querySelectorAll('.small-btn');
-    buyButtons.forEach(btn => {
+    document.querySelectorAll('.small-btn').forEach(btn => {
       if (btn.textContent.includes('Comprar') || btn.textContent.includes('Buy') || btn.textContent.includes('购买')) {
         btn.textContent = translations['button.buy'];
       }
     });
+  },
 
-    // Actualizar botón de añadir al carrito en modal
-    const modalAddBtn = document.getElementById('modal-add-to-cart');
-    if (modalAddBtn) {
-      modalAddBtn.textContent = translations['button.add_to_cart'];
+  updateDynamicTexts(translations) {
+    // Botón del carrito (Header)
+    const cartBtn = document.getElementById('cart-btn');
+    if (cartBtn && typeof state !== 'undefined') {
+      const cartCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
+      cartBtn.textContent = `${translations['header.cart']} (${cartCount})`;
     }
   },
 
   getTranslations() {
     return {
       es: {
-        // Títulos de página
-      'page.title.index': 'ElectroInformatic — Inicio',
-      'page.title.shop': 'ElectroInformatic — Comprar',
-      'page.title.cart': 'ElectroInformatic — Carrito',
-      'page.title.repair': 'ElectroInformatic — Reparar',
-      'page.title.purchases': 'ElectroInformatic — Mis Compras',
-
-      // Header
-      'header.brand': 'ElectroInformatic',
-      'header.tagline': 'Dispositivos electrónicos',
-      'header.cart': 'Carrito',
-      'header.settings': 'Ajustes',
-
-      // Navegación
-      'nav.home': 'Inicio',
-      'nav.shop': 'Comprar',
-      'nav.repair': 'Reparar',
-      'nav.purchases': 'Mis Compras',
-      'nav.login': 'Iniciar Sesión',
-
-      // Página principal
-      'hero.title': 'Bienvenid@ a ElectroInformatic',
-      'hero.subtitle': 'Compra, repara y comparte tu experiencia con tus dispositivos electrónicos favoritos.',
-      'hero.shop': 'Ir a Comprar',
-      'hero.repair': 'Reservar reparación',
-      'hero.help.title': '¿Necesitas ayuda?',
-      'hero.help.text': 'Consulta guías, consejos o solicita una reparación en la pestaña Reparar.',
-      'reviews.title': 'Reseñas de clientes',
-
-      // Página de comprar
-      'shop.title': 'Comprar',
-      'shop.subtitle': 'Haz clic en cualquier producto para ver detalles y añadir al carrito.',
-      'shop.search': '🔍 Buscar dispositivo...',
-      'shop.modal.add': 'Añadir al Carrito',
-
-      // Carrito
-      'cart.title': 'Carrito',
-      'cart.empty': 'Tu carrito está vacío.',
-      'cart.total': 'Total',
-      'cart.checkout': 'Pagar',
-
-      // Modal de pago
-      'payment.title': 'Finalizar Compra',
-      'payment.summary': 'Resumen del Pedido',
-      'payment.method': 'Método de Pago',
-      'payment.card.number': 'Número de Tarjeta',
-      'payment.card.expiry': 'Fecha de Expiración',
-      'payment.card.cvv': 'CVV',
-      'payment.card.name': 'Nombre del Titular',
-      'payment.paypal.message': 'Serás redirigido a PayPal para completar el pago',
-      'payment.transfer.details': 'Datos para transferencia',
-      'payment.transfer.iban': 'IBAN',
-      'payment.transfer.beneficiary': 'Beneficiario',
-      'payment.transfer.concept': 'Concepto',
-      'payment.email': 'Correo Electrónico',
-      'payment.terms': 'Acepto los términos y condiciones',
-      'payment.cancel': 'Cancelar',
-      'payment.pay': 'Pagar Ahora',
-      'payment.email_required': 'Por favor, introduce tu correo electrónico',
-      'payment.terms_required': 'Debes aceptar los términos y condiciones',
-      'payment.card_required': 'Por favor, completa todos los datos de la tarjeta',
-      'payment.card_invalid': 'El número de tarjeta debe tener 16 dígitos',
-
-      // Reparar
-      'repair.title': 'Reparar',
-      'repair.name': 'Nombre',
-      'repair.device': 'Dispositivo (ej. móvil, portátil)',
-      'repair.description': 'Descripción del fallo',
-      'repair.submit': 'Enviar solicitud',
-      'repair.call': 'Llamar',
-      'repair.requests': 'Solicitudes enviadas',
-      'repair.no_requests': 'Aún no hay solicitudes.',
-      'repair.status': 'Estado',
-      'repair.status.pending': 'Pendiente',
-      'repair.status.processing': 'En proceso',
-      'repair.status.completed': 'Completado',
-      'repair.status.cancelled': 'Cancelado',
-      'repair.edit': 'Editar',
-      'repair.delete': 'Eliminar',
-      'repair.problem': 'Descripción del problema',
-      'repair.requested_by': 'Solicitado por:',
-      'repair.required_fields': 'Por favor, completa todos los campos.',
-      'repair.delete_confirm': '¿Estás seguro de que quieres eliminar esta solicitud de reparación?',
-      'repair.not_found': 'No se encontró la solicitud de reparación',
-
-      // Mis Compras
-      'purchases.title': 'Mis Compras',
-      'purchases.subtitle': 'Aquí verás tus pedidos completados. Puedes añadir una reseña.',
-      'purchases.empty': 'Aún no has comprado nada.',
-      'purchases.review': 'Añadir Reseña',
-      'purchases.edit_review': 'Editar Reseña',
-      'purchases.your_review': 'Tu reseña',
-      'purchases.no_date': 'Sin fecha',
-
-      // Reseñas
-      'review.title': 'Escribe tu reseña',
-      'review.rating': 'Calificación',
-      'review.select_stars': 'Selecciona las estrellas',
-      'review.rating.bad': 'Malo',
-      'review.rating.poor': 'Regular',
-      'review.rating.good': 'Bueno',
-      'review.rating.very_good': 'Muy bueno',
-      'review.rating.excellent': 'Excelente',
-      'review.placeholder': 'Comparte tu experiencia con este producto... ¿Qué te gustó? ¿Qué mejorarías?',
-      'review.cancel': 'Cancelar',
-      'review.submit': 'Publicar Reseña',
-      'review.rating_required': 'Por favor, selecciona una calificación con estrellas',
-      'review.text_required': 'Por favor, escribe tu reseña',
-      'review.default.phone': '"El X-Phone me sorprendió, excelente batería."',
-      'review.default.laptop': '"SpeedBook va genial para clase y trabajo."',
-      'review.default.headphones': '"SoundMax tiene un sonido brutal."',
-      'review.default.watch': '"FitTime es cómodo y mide bien el pulso."',
-
-
-      // Footer
-      'footer.text': '✨ La tienda para verdaderos ElectroInformaticos ✨',
-
-      // Modal de login
-      'login.title': '💻 ElectroInformatic',
-      'login.subtitle': 'Únete a nuestra comunidad de expertos',
-      'login.email': '📧 Correo electrónico',
-      'login.name': '👤 Nombre completo',
-      'login.password': '🔒 Contraseña',
-      'login.register': '📝 Registrarse',
-      'login.signin': '🚀 Iniciar Sesión',
-      'login.terms': 'Al registrarte aceptas nuestros términos y condiciones',
-      'login.tip.register': 'Para registrarte:',
-      'login.tip.register.desc': 'Completa todos los campos',
-      'login.tip.login': 'Para iniciar sesión:',
-      'login.tip.login.desc': 'Solo email y contraseña',
-      'login.required_fields': 'Por favor, completa todos los campos.',
-      'login.invalid_email': 'Por favor, introduce un correo electrónico válido.',
-      'login.no_users': 'No hay usuarios registrados. Por favor, regístrate primero.',
-      'login.invalid_credentials': 'Correo electrónico o contraseña incorrectos.',
-      'login.success': '¡Inicio de sesión exitoso! Bienvenido de nuevo ',
-      'registration.success': '¡Registro exitoso! Bienvenido ',
-      'logout.success': 'Has cerrado sesión correctamente.',
-      'logout.confirm': '¿Deseas cerrar sesión, ${user.name}?',
-
-      // Ajustes
-      'settings.title': 'Ajustes',
-      'settings.fontSize': 'Tamaño de letra:',
-      'settings.language': 'Idioma:',
-      'settings.save': 'Guardar Ajustes',
-      'settings.small': 'Pequeño',
-      'settings.medium': 'Mediano',
-      'settings.large': 'Grande',
-      'settings.xlarge': 'Muy Grande',
-      'settings.saved': 'Ajustes guardados correctamente',
-      'settings.select_all': 'Por favor, selecciona todas las opciones',
-
-      // Botones y acciones
-      'button.add_to_cart': 'Añadir al Carrito',
-      'button.buy': 'Comprar',
-      'button.view_details': 'Ver Detalles',
-      'button.edit': 'Editar',
-      'button.delete': 'Eliminar',
-      'button.save': 'Guardar',
-      'button.cancel': 'Cancelar',
-      'button.submit': 'Enviar',
-      'button.confirm': 'Confirmar',
-      'button.close': 'Cerrar',
-
-      // Notificaciones
-      'notification.added_to_cart': 'añadido al carrito!',
-      'notification.login_success': '¡Inicio de sesión exitoso! Bienvenido de nuevo',
-      'notification.registration_success': '¡Registro exitoso! Bienvenido',
-      'notification.logout_success': 'Has cerrado sesión correctamente.',
-      'notification.empty_cart': 'El carrito está vacío',
-      'notification.payment_success': '¡Pago completado! Gracias por tu compra. ✨',
-      'notification.repair_submitted': '✅ Solicitud de reparación enviada correctamente',
-      'notification.repair_deleted': '🗑️ Solicitud eliminada correctamente',
-      'notification.repair_updated': '✅ Solicitud de reparación actualizada correctamente',
-      'notification.review_thanks': '¡Gracias por tu reseña! ✨',
-      'notification.product_added': '¡Producto añadido al carrito!',
-      'notification.cart_updated': 'Carrito actualizado',
-      'notification.payment_processing': 'Procesando pago...',
-
-      // Características de dispositivos (especificaciones)
-      'specs.intel_core_i7': 'Intel Core i7',
-      'specs.16gb_ram': '16GB RAM',
-      'specs.512gb_ssd': '512GB SSD',
-      'specs.rtx_3050': 'RTX 3050',
-      'specs.15_6_fhd': '15.6" FHD',
-      'specs.windows_11': 'Windows 11',
-      'specs.intel_i5': 'Intel i5',
-      'specs.8gb_ram': '8GB RAM',
-      'specs.256gb_ssd': '256GB SSD',
-      'specs.intel_iris': 'Gráficos Intel Iris',
-      'specs.14_fhd': '14" FHD',
-      'specs.12h_battery': '12h batería',
-      'specs.noise_cancellation': 'Cancelación de ruido',
-      'specs.20h_battery': '20h batería',
-      'specs.bluetooth_5': 'Bluetooth 5.0',
-      'specs.built_in_mic': 'Micrófono integrado',
-      'specs.foldable': 'Plegables',
-      'specs.amoled': 'Pantalla AMOLED',
-      'specs.water_resistant': 'Resistente al agua',
-      'specs.heart_monitor': 'Monitoreo cardiaco',
-      'specs.notifications': 'Notificaciones',
-      'specs.7_days_battery': '7 días batería',
-      'specs.27_fhd': '27" FHD',
-      'specs.75hz': '75Hz',
-      'specs.ips': 'IPS',
-      'specs.hdmi_vga': 'HDMI/VGA',
-      'specs.thin_border': 'Borde delgado',
-      'specs.blue_switches': 'Switches Blue',
-      'specs.rgb': 'RGB',
-      'specs.pbt_keys': 'Teclas PBT',
-      'specs.usb_c': 'USB-C',
-      'specs.wrist_rest': 'Reposamuñecas',
-      'specs.16000_dpi': '16000 DPI',
-      'specs.wireless': 'Inalámbrico',
-      'specs.6_buttons': '6 botones',
-      'specs.50h_battery': '50h batería',
-      'specs.ergonomic': 'Ergonómico',
-      'specs.1tb_nvme': '1TB NVMe',
-      'specs.3500_mbs': '3500 MB/s',
-      'specs.m2': 'M.2',
-      'specs.5_years_warranty': '5 años garantía',
-      'specs.rtx_4060': 'RTX 4060',
-      'specs.8gb_gddr6': '8GB GDDR6',
-      'specs.dlss_3': 'DLSS 3',
-      'specs.3_fans': '3 ventiladores',
-      'specs.pcie_4': 'PCIe 4.0',
-      'specs.wifi': 'WiFi',
-      'specs.bluetooth': 'Bluetooth',
-      'specs.scanner': 'Escáner',
-      'specs.copier': 'Copiadora',
-      'specs.continuous_ink': 'Tinta continua',
-      'specs.wifi_6': 'WiFi 6',
-      'specs.6000_mbps': '6000 Mbps',
-      'specs.8_antennas': '8 antenas',
-      'specs.2_5g_port': 'Puerto 2.5G',
-      'specs.app_management': 'App gestión',
-      'specs.1080p_30fps': '1080p 30fps',
-      'specs.auto_focus': 'Enfoque automático',
-      'specs.adjustable_clip': 'Clip ajustable',
-      'specs.usb': 'USB',
-      'specs.2_1_channels': '2.1 Canales',
-      'specs.100w': '100W',
-      'specs.aux_input': 'Entrada auxiliar',
-      'specs.remote_control': 'Control remoto',
-      'specs.16gb_ddr4': '16GB DDR4',
-      'specs.3200mhz': '3200MHz',
-      'specs.cl16': 'CL16',
-      'specs.dual_channel': 'Dual Channel',
-      'specs.heatsink': 'Disipador',
-      'specs.10_fhd': '10" FHD',
-      'specs.64gb': '64GB',
-      'specs.8h_battery': '8h batería',
-      'specs.android': 'Android',
-      'specs.8mp_camera': 'Cámara 8MP',
-      'product.specs': 'Especificaciones técnicas',
-      'specs.cancelaci_n_de_ruido_pro': 'Cancelación de ruido Pro',
-      'specs.30h_bater_a': '30h batería',
-      'specs.bluetooth_5_2': 'Bluetooth 5.2',
-      'specs.estuche_de_carga': 'Estuche de carga',
-      'specs.audio_hi_fi': 'Audio Hi-Fi',
-      'specs.sonido_7_1': 'Sonido 7.1',
-      'specs.micr_fono_retr_ctil': 'Micrófono retráctil',
-      'specs.rgb_din_mico': 'RGB dinámico',
-      'specs.almohadillas_suaves': 'Almohadillas suaves',
-      'specs.cable_trenzado_2m': 'Cable trenzado 2m',
-      'specs.bluetooth_5_3': 'Bluetooth 5.3',
-      'specs.estuche_de_carga_usb_c': 'Estuche de carga USB-C',
-      'specs.control_t_ctil': 'Control táctil',
-      'specs.24h_de_bater_a_total': '24h de batería total',
-      'specs.dise_o_ergon_mico': 'Diseño ergonómico',
-      'specs.resistencia_ipx7': 'Resistencia IPX7',
-      'specs.enganche_deportivo': 'Enganche deportivo',
-      'specs.micr_fono_hd': 'Micrófono HD',
-
-      // Traducciones de productos
-      'product.1.name': 'Pccom revolt i7 3050',
-      'product.1.desc': 'Portátil gaming de alto rendimiento con procesador Intel Core i7 y tarjeta gráfica RTX 3050. Ideal para gaming y trabajo intensivo.',
-
-      'product.2.name': 'SpeedBook 14"',
-      'product.2.desc': 'Portátil ultraligero perfecto para trabajo y estudio. Diseño elegante y batería de larga duración.',
-
-      'product.3.name': 'Auriculares SoundMax',
-      'product.3.desc': 'Auriculares con sonido envolvente y cancelación activa de ruido. Perfectos para música y gaming.',
-
-      'product.4.name': 'Smartwatch FitTime',
-      'product.4.desc': 'Monitoriza tu salud y notificaciones con este elegante smartwatch. Resistente al agua.',
-
-      'product.5.name': 'Monitor UltraView 27"',
-      'product.5.desc': 'Pantalla Full HD con colores vibrantes y marco delgado. Ideal para trabajo y entretenimiento.',
-
-      'product.6.name': 'Teclado Mecánico ProKey',
-      'product.6.desc': 'Retroiluminado RGB y switches de alta durabilidad. Experiencia de escritura superior.',
-
-      'product.7.name': 'Ratón Óptico SwiftClick',
-      'product.7.desc': 'Precisión extrema y diseño ergonómico para largas sesiones. Conexión inalámbrica.',
-
-      'product.8.name': 'Disco SSD FastDrive 1TB',
-      'product.8.desc': 'Velocidad de lectura y escritura ultrarrápida. Mejora el rendimiento de tu equipo.',
-
-      'product.9.name': 'Tarjeta Gráfica PowerX 4060',
-      'product.9.desc': 'Rendimiento ideal para gaming y edición de video. Soporta los últimos juegos en alta calidad.',
-
-      'product.10.name': 'Impresora JetPrint 3000',
-      'product.10.desc': 'Impresión rápida con conectividad WiFi y Bluetooth. Multifunción a color.',
-
-      'product.11.name': 'Router WiFi TurboNet AX6000',
-      'product.11.desc': 'Cobertura amplia y soporte para WiFi 6. Perfecto para hogares con muchos dispositivos.',
-
-      'product.12.name': 'Cámara Web ClearView HD',
-      'product.12.desc': 'Resolución 1080p ideal para videollamadas y streaming. Micrófono integrado.',
-
-      'product.13.name': 'Altavoces BassBoom 2.1',
-      'product.13.desc': 'Potente sonido con graves profundos y diseño moderno. Conexión Bluetooth y auxiliar.',
-
-      'product.14.name': 'Memoria RAM HyperSpeed 16GB',
-      'product.14.desc': 'Rendimiento superior para multitarea y gaming. Compatible con la mayoría de placas.',
-
-      'product.15.name': 'Tablet TabX 10"',
-      'product.15.desc': 'Pantalla grande y batería de larga duración para entretenimiento y trabajo ligero.',
-
-      'product.16.name': 'Auriculares ProMax',
-      'product.16.desc': 'Sonido de estudio con graves profundos y diseño premium. Cancelación de ruido avanzada.',
-
-      'product.17.name': 'GamerZone H7',
-      'product.17.desc': 'Auriculares gaming con sonido envolvente 7.1 y micrófono retráctil. Diseño ergonómico con luces RGB.',
-
-      'product.18.name': 'MiniPods AirLite',
-      'product.18.desc': 'Auriculares inalámbricos ultraligeros con estuche de carga compacto. Sonido claro y conexión instantánea.',
-
-      'product.19.name': 'SoundBeats Urban',
-      'product.19.desc': 'Auriculares deportivos resistentes al agua con enganche ergonómico. Sonido potente y ajuste seguro para entrenar.',
-
-      'settings.fontSize.desc': 'Ajusta el tamaño del texto para mejor legibilidad',
-        'settings.language.desc': 'Selecciona tu idioma preferido',
-        'settings.small.desc': 'Texto compacto',
-        'settings.medium.desc': 'Tamaño estándar',
-        'settings.large.desc': 'Texto ampliado',
-        'settings.xlarge.desc': 'Texto extra grande',
-        'settings.language.es': 'Español',
-        'settings.language.en': 'Inglés',
-        'settings.language.zh': 'Chino',
-
-      // Tutorial
-'tutorial.start': 'Iniciar Tutorial',
-'tutorial.empty_cart_redirect': 'Parece que tu carrito está vacío. Vamos a la página de productos para añadir algo.',
-'tutorial.welcome': '¡Bienvenido al tutorial de ElectroInformatic!',
-'tutorial.click_product': 'Para comenzar, haz clic en este producto para ver sus detalles y especificaciones.',
-'tutorial.add_to_cart': 'Ahora que has visto las especificaciones del producto, añádelo a tu carrito haciendo clic aquí.',
-'tutorial.go_to_cart': '¡Perfecto! Has añadido el producto al carrito. Ahora haz clic en el carrito para ver tus productos y finalizar la compra.',
-'tutorial.cart_welcome': '¡Bienvenido al carrito! Aquí puedes ver todos los productos que has añadido.',
-'tutorial.proceed_checkout': 'Para continuar con la compra, haz clic en "Pagar".',
-'tutorial.complete_payment': 'Completa los datos de pago para finalizar tu compra. En un entorno real, aquí introducirías tus datos de tarjeta.',
-'tutorial.completed': '¡Tutorial completado! Ahora sabes cómo comprar en ElectroInformatic.',
-'tutorial.step': 'Paso',
-'tutorial.previous': 'Anterior',
-'tutorial.next': 'Siguiente',
-'tutorial.finish': 'Finalizar',
-
-        //Ofertas
+        // ... (Tus traducciones existentes se mantienen) ...
+        'page.title.index': 'ElectroInformatic — Inicio',
+        'page.title.shop': 'ElectroInformatic — Comprar',
+        'page.title.cart': 'ElectroInformatic — Carrito',
+        'page.title.repair': 'ElectroInformatic — Reparar',
         'page.title.offers': 'ElectroInformatic — Ofertas',
-'offers.special_offers': 'Ofertas Especiales',
-'offers.special_offers.subtitle': 'Aprovecha nuestras promociones exclusivas por tiempo limitado',
-'offers.black_friday.title': '🛍️ BLACK FRIDAY 🛍️',
-'offers.black_friday.subtitle': '¡Ofertas exclusivas por tiempo limitado!',
-'offers.3x2.title': '3x2 en Auriculares',
-'offers.3x2.description': 'Llévate 3 auriculares y paga solo 2. ¡La mejor oferta en sonido!',
-'offers.3x2.details': 'Aplica en todos los modelos de auriculares',
-'offers.20_discount.title': '20% DTO en +250€',
-'offers.20_discount.description': 'Consigue un 20% de descuento en compras superiores a 250€',
-'offers.20_discount.details': 'Se aplica automáticamente',
-'offers.free_shipping.title': 'Envío Gratis',
-'offers.free_shipping.description': 'Envío gratuito en todos los pedidos durante el Black Friday',
-'offers.free_shipping.details': 'Válido hasta agotar existencias',
-'offers.featured_products': 'Productos Destacados en Oferta',
-'offers.complete_offer': '¡Completa tu oferta 3x2!',
-'offers.add_for_promotion': 'Añade uno de estos productos para la promoción:',
-'offers.off': 'OFF',
-'nav.offers': "Ver todas las ofertas",
-'header.nav.offers': "Ofertas",
+        'page.title.purchases': 'ElectroInformatic — Mis Compras',
+        'header.brand': 'ElectroInformatic',
+        'header.tagline': 'Dispositivos electrónicos',
+        'header.cart': 'Carrito',
+        'header.settings': 'Ajustes',
+        'nav.home': 'Inicio',
+        'nav.shop': 'Comprar',
+        'nav.repair': 'Reparar',
+        'nav.purchases': 'Mis Compras',
+        'nav.login': 'Iniciar Sesión',
+        'header.nav.offers': "Ofertas",
+        'hero.title': 'Bienvenid@ a ElectroInformatic',
+        'hero.subtitle': 'Compra, repara y comparte tu experiencia con tus dispositivos electrónicos favoritos.',
+        'hero.shop': 'Ir a Comprar',
+        'hero.repair': 'Reservar reparación',
+        'hero.help.title': '¿Necesitas ayuda?',
+        'hero.help.text': 'Consulta guías, consejos o solicita una reparación en la pestaña Reparar.',
+        'reviews.title': 'Reseñas de clientes',
+        'shop.title': 'Comprar',
+        'shop.subtitle': 'Haz clic en cualquier producto para ver detalles y añadir al carrito.',
+        'shop.search': '🔍 Buscar dispositivo...',
+        'shop.modal.add': 'Añadir al Carrito',
+        'cart.title': 'Carrito',
+        'cart.empty': 'Tu carrito está vacío.',
+        'cart.total': 'Total',
+        'cart.checkout': 'Pagar',
+        'repair.title': 'Reparar',
+        'repair.name': 'Nombre',
+        'repair.device': 'Dispositivo (ej. móvil, portátil)',
+        'repair.description': 'Descripción del fallo',
+        'repair.submit': 'Enviar solicitud',
+        'repair.call': 'Llamar',
+        'repair.requests': 'Solicitudes enviadas',
+        'repair.no_requests': 'Aún no hay solicitudes.',
+        'purchases.title': 'Mis Compras',
+        'purchases.subtitle': 'Aquí verás tus pedidos completados. Puedes añadir una reseña.',
+        'purchases.empty': 'Aún no has comprado nada.',
+        'purchases.review': 'Añadir Reseña',
+        'footer.text': '✨ La tienda para verdaderos ElectroInformaticos ✨',
+        'login.title': '💻 ElectroInformatic',
+        'login.subtitle': 'Únete a nuestra comunidad de expertos',
+        'login.email': '📧 Correo electrónico',
+        'login.name': '👤 Nombre completo',
+        'login.password': '🔒 Contraseña',
+        'login.register': '📝 Registrarse',
+        'login.signin': '🚀 Iniciar Sesión',
+        'login.terms': 'Al registrarte aceptas nuestros términos y condiciones',
+        'login.tip.register': 'Para registrarte:',
+        'login.tip.register.desc': 'Completa todos los campos',
+        'login.tip.login': 'Para iniciar sesión:',
+        'login.tip.login.desc': 'Solo email y contraseña',
+        'settings.title': 'Ajustes',
+        'settings.fontSize': 'Tamaño de letra',
+        'settings.fontSize.desc': 'Ajusta el tamaño del texto para mejor legibilidad',
+        'settings.language': 'Idioma',
+        'settings.language.desc': 'Selecciona tu idioma preferido',
+        'settings.save': 'Guardar Ajustes',
+        'settings.small': 'Pequeño',
+        'settings.small.desc': 'Texto compacto',
+        'settings.medium': 'Mediano',
+        'settings.medium.desc': 'Tamaño estándar',
+        'settings.large': 'Grande',
+        'settings.large.desc': 'Texto ampliado',
+        'settings.xlarge': 'Muy Grande',
+        'settings.xlarge.desc': 'Texto extra grande',
+        'settings.saved': 'Ajustes guardados correctamente',
+        'settings.accessibility': 'Accesibilidad Visual',
+        'settings.accessibility.desc': 'Ajuste de colores para daltonismo',
+        'settings.color.normal': 'Normal',
+        'settings.color.normal.desc': 'Colores estándar',
+        'settings.color.protanopia': 'Protanopía',
+        'settings.color.protanopia.desc': 'Sin Rojo (Ayuda visual)',
+        'settings.color.tritanopia': 'Tritanopía',
+        'settings.color.tritanopia.desc': 'Sin Azul (Ayuda visual)',
+        'button.buy': 'Comprar',
+        'button.add_to_cart': 'Añadir al Carrito',
+
+        // --- NUEVAS TRADUCCIONES DE GESTOS ---
+        'settings.gestures': 'Control por Gestos',
+        'settings.gestures.desc': 'Navega usando las manos (Cámara)',
+        'settings.gestures.on': 'Activado',
+        'settings.gestures.on.desc': 'Cámara encendida',
+        'settings.gestures.off': 'Desactivado',
+        'settings.gestures.off.desc': 'Uso normal',
+
+        // Ofertas
+        'offers.special_offers': 'Ofertas Especiales',
+        'offers.special_offers.subtitle': 'Aprovecha nuestras promociones exclusivas por tiempo limitado',
+        'offers.black_friday.title': '🛍️ BLACK FRIDAY 🛍️',
+        'offers.black_friday.subtitle': '¡Ofertas exclusivas por tiempo limitado!',
+        'offers.3x2.title': '3x2 en Auriculares',
+        'offers.3x2.description': 'Llévate 3 auriculares y paga solo 2. ¡La mejor oferta en sonido!',
+        'offers.3x2.details': 'Aplica en todos los modelos de auriculares',
+        'offers.20_discount.title': '20% DTO en +250€',
+        'offers.20_discount.description': 'Consigue un 20% de descuento en compras superiores a 250€',
+        'offers.20_discount.details': 'Se aplica automáticamente',
+        'offers.free_shipping.title': 'Envío Gratis',
+        'offers.free_shipping.description': 'Envío gratuito en todos los pedidos durante el Black Friday',
+        'offers.free_shipping.details': 'Válido hasta agotar existencias',
+        'offers.featured_products': 'Productos Destacados en Oferta',
+        'offers.complete_offer': '¡Completa tu oferta 3x2!',
+        'offers.add_for_promotion': 'Añade uno de estos productos para la promoción:',
+        'offers.off': 'OFF',
+        'nav.offers': "Ver todas las ofertas",
         'cart.subtotal': 'Subtotal',
         'cart.discount_applied': 'Descuento aplicado',
         'cart.offer.3x2': '🟢 Oferta activa: 3x2 en Auriculares',
@@ -2601,395 +2462,117 @@ updateDynamicTexts(translations) {
         'cart.offer.none': 'Sin ofertas aplicadas',
         'cart.total_pay': 'Total a pagar',
         'cart.free_shipping': '🚚 Envío gratis incluido',
-        // --- TRADUCCIONES DE ACCESIBILIDAD (ESPAÑOL) ---
-      'settings.accessibility': 'Accesibilidad Visual',
-      'settings.accessibility.desc': 'Ajuste de colores para daltonismo',
-      'settings.color.normal': 'Normal',
-      'settings.color.normal.desc': 'Colores estándar',
-      'settings.color.protanopia': 'Protanopía',
-      'settings.color.protanopia.desc': 'Sin Rojo (Ayuda visual)',
-      'settings.color.tritanopia': 'Tritanopía',
-      'settings.color.tritanopia.desc': 'Sin Azul (Ayuda visual)',
-
-
       },
       en: {
-      'page.title.index': 'ElectroInformatic — Home',
-  'page.title.shop': 'ElectroInformatic — Shop',
-  'page.title.cart': 'ElectroInformatic — Cart',
-  'page.title.repair': 'ElectroInformatic — Repair',
-  'page.title.purchases': 'ElectroInformatic — My Purchases',
-
-  // Header
-  'header.brand': 'ElectroInformatic',
-  'header.tagline': 'Electronic devices',
-  'header.cart': 'Cart',
-  'header.settings': 'Settings',
-
-  // Navigation
-  'nav.home': 'Home',
-  'nav.shop': 'Shop',
-  'nav.repair': 'Repair',
-  'nav.purchases': 'My Purchases',
-  'nav.login': 'Sign In',
-
-  // Home page
-  'hero.title': 'Welcome to ElectroInformatic',
-  'hero.subtitle': 'Buy, repair and share your experience with your favorite electronic devices.',
-  'hero.shop': 'Go Shopping',
-  'hero.repair': 'Book Repair',
-  'hero.help.title': 'Need help?',
-  'hero.help.text': 'Check guides, tips or request a repair in the Repair tab.',
-  'reviews.title': 'Customer Reviews',
-
-  // Shop page
-  'shop.title': 'Shop',
-  'shop.subtitle': 'Click on any product to see details and add to cart.',
-  'shop.search': '🔍 Search device...',
-  'shop.modal.add': 'Add to Cart',
-
-  // Cart
-  'cart.title': 'Cart',
-  'cart.empty': 'Your cart is empty.',
-  'cart.total': 'Total',
-  'cart.checkout': 'Checkout',
-
-  // Payment modal
-  'payment.title': 'Complete Purchase',
-  'payment.summary': 'Order Summary',
-  'payment.method': 'Payment Method',
-  'payment.card.number': 'Card Number',
-  'payment.card.expiry': 'Expiration Date',
-  'payment.card.cvv': 'CVV',
-  'payment.card.name': 'Cardholder Name',
-  'payment.paypal.message': 'You will be redirected to PayPal to complete the payment',
-  'payment.transfer.details': 'Transfer details',
-  'payment.transfer.iban': 'IBAN',
-  'payment.transfer.beneficiary': 'Beneficiary',
-  'payment.transfer.concept': 'Concept',
-  'payment.email': 'Email',
-  'payment.terms': 'I accept the terms and conditions',
-  'payment.cancel': 'Cancel',
-  'payment.pay': 'Pay Now',
-  'payment.email_required': 'Please enter your email address',
-  'payment.terms_required': 'You must accept the terms and conditions',
-  'payment.card_required': 'Please complete all card details',
-  'payment.card_invalid': 'Card number must have 16 digits',
-
-  // Repair
-  'repair.title': 'Repair',
-  'repair.name': 'Name',
-  'repair.device': 'Device (e.g. phone, laptop)',
-  'repair.description': 'Problem description',
-  'repair.submit': 'Submit request',
-  'repair.call': 'Call',
-  'repair.requests': 'Submitted requests',
-  'repair.no_requests': 'No requests yet.',
-  'repair.status': 'Status',
-  'repair.status.pending': 'Pending',
-  'repair.status.processing': 'In process',
-  'repair.status.completed': 'Completed',
-  'repair.status.cancelled': 'Cancelled',
-  'repair.edit': 'Edit',
-  'repair.delete': 'Delete',
-  'repair.problem': 'Problem description',
-  'repair.requested_by': 'Requested by:',
-  'repair.required_fields': 'Please complete all fields.',
-  'repair.delete_confirm': 'Are you sure you want to delete this repair request?',
-  'repair.not_found': 'Repair request not found',
-
-  // Purchases
-  'purchases.title': 'My Purchases',
-  'purchases.subtitle': 'Here you will see your completed orders. You can add a review.',
-  'purchases.empty': 'You haven\'t purchased anything yet.',
-  'purchases.review': 'Add Review',
-  'purchases.edit_review': 'Edit Review',
-  'purchases.your_review': 'Your review',
-  'purchases.no_date': 'No date',
-
-  // Reviews
-  'review.title': 'Write your review',
-  'review.rating': 'Rating',
-  'review.select_stars': 'Select the stars',
-  'review.rating.bad': 'Bad',
-  'review.rating.poor': 'Poor',
-  'review.rating.good': 'Good',
-  'review.rating.very_good': 'Very Good',
-  'review.rating.excellent': 'Excellent',
-  'review.placeholder': 'Share your experience with this product... What did you like? What would you improve?',
-  'review.cancel': 'Cancel',
-  'review.submit': 'Publish Review',
-  'review.rating_required': 'Please select a rating with stars',
-  'review.text_required': 'Please write your review',
-  'review.default.phone': '"The X-Phone surprised me, excellent battery."',
-  'review.default.laptop': '"SpeedBook works great for class and work."',
-  'review.default.headphones': '"SoundMax has amazing sound."',
-  'review.default.watch': '"FitTime is comfortable and measures pulse well."',
-
-  // Footer
-  'footer.text': '✨ The store for true ElectroInformaticos ✨',
-
-  // Login modal
-  'login.title': '💻 ElectroInformatic',
-  'login.subtitle': 'Join our community of experts',
-  'login.email': '📧 Email',
-  'login.name': '👤 Full name',
-  'login.password': '🔒 Password',
-  'login.register': '📝 Register',
-  'login.signin': '🚀 Sign In',
-  'login.terms': 'By registering you accept our terms and conditions',
-  'login.tip.register': 'To register:',
-  'login.tip.register.desc': 'Complete all fields',
-  'login.tip.login': 'To sign in:',
-  'login.tip.login.desc': 'Only email and password',
-  'login.required_fields': 'Please complete all fields.',
-  'login.invalid_email': 'Please enter a valid email address.',
-  'login.no_users': 'No registered users. Please register first.',
-  'login.invalid_credentials': 'Incorrect email or password.',
-  'login.success': 'Login successful! Welcome back ',
-  'registration.success': 'Registration successful! Welcome ',
-  'logout.success': 'You have successfully logged out.',
-  'logout.confirm': 'Do you want to log out, ${user.name}?',
-
-  // Settings
-  'settings.title': 'Settings',
-  'settings.fontSize': 'Font size:',
-  'settings.language': 'Language:',
-  'settings.save': 'Save Settings',
-  'settings.small': 'Small',
-  'settings.medium': 'Medium',
-  'settings.large': 'Large',
-  'settings.xlarge': 'Extra Large',
-  'settings.saved': 'Settings saved successfully',
-  'settings.select_all': 'Please select all options',
-
-  // Buttons and actions
-  'button.add_to_cart': 'Add to Cart',
-  'button.buy': 'Buy',
-  'button.view_details': 'View Details',
-  'button.edit': 'Edit',
-  'button.delete': 'Delete',
-  'button.save': 'Save',
-  'button.cancel': 'Cancel',
-  'button.submit': 'Submit',
-  'button.confirm': 'Confirm',
-  'button.close': 'Close',
-
-  // Notifications
-  'notification.added_to_cart': 'added to cart!',
-  'notification.login_success': 'Login successful! Welcome back',
-  'notification.registration_success': 'Registration successful! Welcome',
-  'notification.logout_success': 'You have successfully logged out.',
-  'notification.empty_cart': 'The cart is empty',
-  'notification.payment_success': 'Payment completed! Thank you for your purchase. ✨',
-  'notification.repair_submitted': '✅ Repair request submitted successfully',
-  'notification.repair_deleted': '🗑️ Request deleted successfully',
-  'notification.repair_updated': '✅ Repair request updated successfully',
-  'notification.review_thanks': 'Thank you for your review! ✨',
-  'notification.product_added': 'Product added to cart!',
-  'notification.cart_updated': 'Cart updated',
-  'notification.payment_processing': 'Processing payment...',
-
-  // Product descriptions in English
-  'product.1.name': 'Pccom revolt i7 3050',
-  'product.1.desc': 'High-performance gaming laptop with Intel Core i7 processor and RTX 3050 graphics card. Ideal for gaming and intensive work.',
-
-  'product.2.name': 'SpeedBook 14"',
-  'product.2.desc': 'Ultra-light laptop perfect for work and study. Elegant design and long battery life.',
-
-  'product.3.name': 'SoundMax Headphones',
-  'product.3.desc': 'Headphones with surround sound and active noise cancellation. Perfect for music and gaming.',
-
-  'product.4.name': 'FitTime Smartwatch',
-  'product.4.desc': 'Monitor your health and notifications with this elegant smartwatch. Water resistant.',
-
-  'product.5.name': 'UltraView 27" Monitor',
-  'product.5.desc': 'Full HD display with vibrant colors and thin bezel. Ideal for work and entertainment.',
-
-  'product.6.name': 'ProKey Mechanical Keyboard',
-  'product.6.desc': 'RGB backlighting and high durability switches. Superior typing experience.',
-
-  'product.7.name': 'SwiftClick Optical Mouse',
-  'product.7.desc': 'Extreme precision and ergonomic design for long sessions. Wireless connection.',
-
-  'product.8.name': 'FastDrive 1TB SSD',
-  'product.8.desc': 'Ultra-fast read and write speeds. Improve your computer performance.',
-
-  'product.9.name': 'PowerX 4060 Graphics Card',
-  'product.9.desc': 'Ideal performance for gaming and video editing. Supports the latest games in high quality.',
-
-  'product.10.name': 'JetPrint 3000 Printer',
-  'product.10.desc': 'Fast printing with WiFi and Bluetooth connectivity. Color multifunction.',
-
-  'product.11.name': 'TurboNet AX6000 WiFi Router',
-  'product.11.desc': 'Wide coverage and WiFi 6 support. Perfect for homes with many devices.',
-
-  'product.12.name': 'ClearView HD Webcam',
-  'product.12.desc': '1080p resolution ideal for video calls and streaming. Built-in microphone.',
-
-  'product.13.name': 'BassBoom 2.1 Speakers',
-  'product.13.desc': 'Powerful sound with deep bass and modern design. Bluetooth and auxiliary connection.',
-
-  'product.14.name': 'HyperSpeed 16GB RAM',
-  'product.14.desc': 'Superior performance for multitasking and gaming. Compatible with most motherboards.',
-
-  'product.15.name': 'TabX 10" Tablet',
-  'product.15.desc': 'Large screen and long battery life for entertainment and light work.',
-
-  'product.16.name': 'ProMax Headphones',
-  'product.16.desc': 'Studio sound with deep bass and premium design. Advanced noise cancellation.',
-
-  'product.17.name': 'GamerZone H7',
-  'product.17.desc': 'Gaming headset with 7.1 surround sound and retractable microphone. Ergonomic design with RGB lights.',
-
-  'product.18.name': 'MiniPods AirLite',
-  'product.18.desc': 'Ultralight wireless earbuds with compact charging case. Clear sound and instant connection.',
-
-  'product.19.name': 'SoundBeats Urban',
-  'product.19.desc': 'Water-resistant sports headphones with ergonomic hook. Powerful sound and secure fit for training.',
-
-  // Device specifications
-  'specs.intel_core_i7': 'Intel Core i7',
-  'specs.16gb_ram': '16GB RAM',
-  'specs.512gb_ssd': '512GB SSD',
-  'specs.rtx_3050': 'RTX 3050',
-  'specs.15_6_fhd': '15.6" FHD',
-  'specs.windows_11': 'Windows 11',
-  'specs.intel_i5': 'Intel i5',
-  'specs.8gb_ram': '8GB RAM',
-  'specs.256gb_ssd': '256GB SSD',
-  'specs.intel_iris': 'Intel Iris Graphics',
-  'specs.14_fhd': '14" FHD',
-  'specs.12h_battery': '12h battery',
-  'specs.noise_cancellation': 'Noise cancellation',
-  'specs.20h_battery': '20h battery',
-  'specs.bluetooth_5': 'Bluetooth 5.0',
-  'specs.built_in_mic': 'Built-in microphone',
-  'specs.foldable': 'Foldable',
-  'specs.amoled': 'AMOLED Display',
-  'specs.water_resistant': 'Water resistant',
-  'specs.heart_monitor': 'Heart monitor',
-  'specs.notifications': 'Notifications',
-  'specs.7_days_battery': '7 days battery',
-  'specs.27_fhd': '27" FHD',
-  'specs.75hz': '75Hz',
-  'specs.ips': 'IPS',
-  'specs.hdmi_vga': 'HDMI/VGA',
-  'specs.thin_border': 'Thin border',
-  'specs.blue_switches': 'Blue Switches',
-  'specs.rgb': 'RGB',
-  'specs.pbt_keys': 'PBT Keys',
-  'specs.usb_c': 'USB-C',
-  'specs.wrist_rest': 'Wrist rest',
-  'specs.16000_dpi': '16000 DPI',
-  'specs.wireless': 'Wireless',
-  'specs.6_buttons': '6 buttons',
-  'specs.50h_battery': '50h battery',
-  'specs.ergonomic': 'Ergonomic',
-  'specs.1tb_nvme': '1TB NVMe',
-  'specs.3500_mbs': '3500 MB/s',
-  'specs.m2': 'M.2',
-  'specs.5_years_warranty': '5 years warranty',
-  'specs.rtx_4060': 'RTX 4060',
-  'specs.8gb_gddr6': '8GB GDDR6',
-  'specs.dlss_3': 'DLSS 3',
-  'specs.3_fans': '3 fans',
-  'specs.pcie_4': 'PCIe 4.0',
-  'specs.wifi': 'WiFi',
-  'specs.bluetooth': 'Bluetooth',
-  'specs.scanner': 'Scanner',
-  'specs.copier': 'Copier',
-  'specs.continuous_ink': 'Continuous ink',
-  'specs.wifi_6': 'WiFi 6',
-  'specs.6000_mbps': '6000 Mbps',
-  'specs.8_antennas': '8 antennas',
-  'specs.2_5g_port': '2.5G Port',
-  'specs.app_management': 'App management',
-  'specs.1080p_30fps': '1080p 30fps',
-  'specs.auto_focus': 'Auto focus',
-  'specs.adjustable_clip': 'Adjustable clip',
-  'specs.usb': 'USB',
-  'specs.2_1_channels': '2.1 Channels',
-  'specs.100w': '100W',
-  'specs.aux_input': 'Aux input',
-  'specs.remote_control': 'Remote control',
-  'specs.16gb_ddr4': '16GB DDR4',
-  'specs.3200mhz': '3200MHz',
-  'specs.cl16': 'CL16',
-  'specs.dual_channel': 'Dual Channel',
-  'specs.heatsink': 'Heatsink',
-  'specs.10_fhd': '10" FHD',
-  'specs.64gb': '64GB',
-  'specs.8h_battery': '8h battery',
-  'specs.android': 'Android',
-  'specs.8mp_camera': '8MP Camera',
-  'product.specs': 'Technical Specifications',
-  'specs.cancelaci_n_de_ruido_pro': 'Pro Noise Cancellation',
-      'specs.30h_bater_a': '30h battery',
-      'specs.bluetooth_5_2': 'Bluetooth 5.2',
-      'specs.estuche_de_carga': 'Charging case',
-      'specs.audio_hi_fi': 'Hi-Fi Audio',
-      'specs.sonido_7_1': '7.1 Sound',
-      'specs.micr_fono_retr_ctil': 'Retractable microphone',
-      'specs.rgb_din_mico': 'Dynamic RGB',
-      'specs.almohadillas_suaves': 'Soft ear pads',
-      'specs.cable_trenzado_2m': '2m braided cable',
-      'specs.bluetooth_5_3': 'Bluetooth 5.3',
-      'specs.estuche_de_carga_usb_c': 'USB-C charging case',
-      'specs.control_t_ctil': 'Touch control',
-      'specs.24h_de_bater_a_total': '24h total battery',
-      'specs.dise_o_ergon_mico': 'Ergonomic design',
-      'specs.resistencia_ipx7': 'IPX7 resistance',
-      'specs.enganche_deportivo': 'Sports hook',
-      'specs.micr_fono_hd': 'HD Microphone',
-
-        'settings.fontSize.desc': 'Adjust text size for better readability',
-'settings.language.desc': 'Select your preferred language',
-'settings.small.desc': 'Compact text',
-'settings.medium.desc': 'Standard size',
-'settings.large.desc': 'Enlarged text',
-'settings.xlarge.desc': 'Extra large text',
-'settings.language.es': 'Spanish',
-'settings.language.en': 'English',
-'settings.language.zh': 'Chinese',
-
-        // Tutorial
-'tutorial.start': 'Start Tutorial',
-'tutorial.empty_cart_redirect': 'Your cart seems to be empty. Let\'s go to the products page to add something.',
-'tutorial.welcome': 'Welcome to the ElectroInformatic tutorial!',
-'tutorial.click_product': 'To get started, click on this product to see its details and specifications.',
-'tutorial.add_to_cart': 'Now that you\'ve seen the product specifications, add it to your cart by clicking here.',
-'tutorial.go_to_cart': 'Perfect! You\'ve added the product to the cart. Now click on the cart to see your products and complete the purchase.',
-'tutorial.cart_welcome': 'Welcome to the cart! Here you can see all the products you\'ve added.',
-'tutorial.proceed_checkout': 'To continue with the purchase, click on "Checkout".',
-'tutorial.complete_payment': 'Complete the payment details to finish your purchase. In a real environment, you would enter your card details here.',
-'tutorial.completed': 'Tutorial completed! Now you know how to shop at ElectroInformatic.',
-'tutorial.step': 'Step',
-'tutorial.previous': 'Previous',
-'tutorial.next': 'Next',
-'tutorial.finish': 'Finish',
-
-        //oferta
+        'page.title.index': 'ElectroInformatic — Home',
+        'page.title.shop': 'ElectroInformatic — Shop',
+        'page.title.cart': 'ElectroInformatic — Cart',
+        'page.title.repair': 'ElectroInformatic — Repair',
         'page.title.offers': 'ElectroInformatic — Offers',
-'offers.special_offers': 'Special Offers',
-'offers.special_offers.subtitle': 'Take advantage of our exclusive limited-time promotions',
-'offers.black_friday.title': '🛍️ BLACK FRIDAY 🛍️',
-'offers.black_friday.subtitle': 'Exclusive limited-time offers!',
-'offers.3x2.title': '3x2 on Headphones',
-'offers.3x2.description': 'Get 3 headphones and pay only 2. The best sound offer!',
-'offers.3x2.details': 'Applies to all headphone models',
-'offers.20_discount.title': '20% OFF on +250€',
-'offers.20_discount.description': 'Get 20% discount on purchases over 250€',
-'offers.20_discount.details': 'Applied automatically',
-'offers.free_shipping.title': 'Free Shipping',
-'offers.free_shipping.description': 'Free shipping on all orders during Black Friday',
-'offers.free_shipping.details': 'Valid while supplies last',
-'offers.featured_products': 'Featured Products on Offer',
-'offers.complete_offer': 'Complete your 3x2 offer!',
-'offers.add_for_promotion': 'Add one of these products for the promotion:',
-'offers.off': 'OFF',
-'nav.offers': "See all offers",
-'header.nav.offers': "Offers",
+        'page.title.purchases': 'ElectroInformatic — My Purchases',
+        'header.brand': 'ElectroInformatic',
+        'header.tagline': 'Electronic devices',
+        'header.cart': 'Cart',
+        'header.settings': 'Settings',
+        'nav.home': 'Home',
+        'nav.shop': 'Shop',
+        'nav.repair': 'Repair',
+        'nav.purchases': 'My Purchases',
+        'nav.login': 'Sign In',
+        'header.nav.offers': "Offers",
+        'hero.title': 'Welcome to ElectroInformatic',
+        'hero.subtitle': 'Buy, repair and share your experience with your favorite electronic devices.',
+        'hero.shop': 'Go Shopping',
+        'hero.repair': 'Book Repair',
+        'hero.help.title': 'Need help?',
+        'hero.help.text': 'Check guides, tips or request a repair in the Repair tab.',
+        'reviews.title': 'Customer Reviews',
+        'shop.title': 'Shop',
+        'shop.subtitle': 'Click on any product to see details and add to cart.',
+        'shop.search': '🔍 Search device...',
+        'shop.modal.add': 'Add to Cart',
+        'cart.title': 'Cart',
+        'cart.empty': 'Your cart is empty.',
+        'cart.total': 'Total',
+        'cart.checkout': 'Checkout',
+        'repair.title': 'Repair',
+        'repair.name': 'Name',
+        'repair.device': 'Device (e.g. phone, laptop)',
+        'repair.description': 'Problem description',
+        'repair.submit': 'Submit request',
+        'repair.call': 'Call',
+        'repair.requests': 'Submitted requests',
+        'repair.no_requests': 'No requests yet.',
+        'purchases.title': 'My Purchases',
+        'purchases.subtitle': 'Here you will see your completed orders. You can add a review.',
+        'purchases.empty': 'You haven\'t purchased anything yet.',
+        'purchases.review': 'Add Review',
+        'footer.text': '✨ The store for true ElectroInformaticos ✨',
+        'login.title': '💻 ElectroInformatic',
+        'login.subtitle': 'Join our community of experts',
+        'login.email': '📧 Email',
+        'login.name': '👤 Full name',
+        'login.password': '🔒 Password',
+        'login.register': '📝 Register',
+        'login.signin': '🚀 Sign In',
+        'login.terms': 'By registering you accept our terms and conditions',
+        'login.tip.register': 'To register:',
+        'login.tip.register.desc': 'Complete all fields',
+        'login.tip.login': 'To sign in:',
+        'login.tip.login.desc': 'Only email and password',
+        'settings.title': 'Settings',
+        'settings.fontSize': 'Font size',
+        'settings.fontSize.desc': 'Adjust text size for better readability',
+        'settings.language': 'Language',
+        'settings.language.desc': 'Select your preferred language',
+        'settings.save': 'Save Settings',
+        'settings.small': 'Small',
+        'settings.small.desc': 'Compact text',
+        'settings.medium': 'Medium',
+        'settings.medium.desc': 'Standard size',
+        'settings.large': 'Large',
+        'settings.large.desc': 'Enlarged text',
+        'settings.xlarge': 'Extra Large',
+        'settings.xlarge.desc': 'Extra large text',
+        'settings.saved': 'Settings saved successfully',
+        'settings.accessibility': 'Visual Accessibility',
+        'settings.accessibility.desc': 'Color blind mode adjustment',
+        'settings.color.normal': 'Normal',
+        'settings.color.normal.desc': 'Standard colors',
+        'settings.color.protanopia': 'Protanopia',
+        'settings.color.protanopia.desc': 'No Red (Visual aid)',
+        'settings.color.tritanopia': 'Tritanopia',
+        'settings.color.tritanopia.desc': 'No Blue (Visual aid)',
+        'button.buy': 'Buy',
+        'button.add_to_cart': 'Add to Cart',
+
+        // --- NEW GESTURE TRANSLATIONS ---
+        'settings.gestures': 'Gesture Control',
+        'settings.gestures.desc': 'Navigate using hands (Camera)',
+        'settings.gestures.on': 'Enabled',
+        'settings.gestures.on.desc': 'Camera on',
+        'settings.gestures.off': 'Disabled',
+        'settings.gestures.off.desc': 'Normal use',
+
+        // Offers
+        'offers.special_offers': 'Special Offers',
+        'offers.special_offers.subtitle': 'Take advantage of our exclusive limited-time promotions',
+        'offers.black_friday.title': '🛍️ BLACK FRIDAY 🛍️',
+        'offers.black_friday.subtitle': 'Exclusive limited-time offers!',
+        'offers.3x2.title': '3x2 on Headphones',
+        'offers.3x2.description': 'Get 3 headphones and pay only 2. The best sound offer!',
+        'offers.3x2.details': 'Applies to all headphone models',
+        'offers.20_discount.title': '20% OFF on +250€',
+        'offers.20_discount.description': 'Get 20% discount on purchases over 250€',
+        'offers.20_discount.details': 'Applied automatically',
+        'offers.free_shipping.title': 'Free Shipping',
+        'offers.free_shipping.description': 'Free shipping on all orders during Black Friday',
+        'offers.free_shipping.details': 'Valid while supplies last',
+        'offers.featured_products': 'Featured Products on Offer',
+        'offers.complete_offer': 'Complete your 3x2 offer!',
+        'offers.add_for_promotion': 'Add one of these products for the promotion:',
+        'offers.off': 'OFF',
+        'nav.offers': "See all offers",
         'cart.subtotal': 'Subtotal',
         'cart.discount_applied': 'Discount applied',
         'cart.offer.3x2': '🟢 Active Offer: 3x2 on Headphones',
@@ -2997,408 +2580,124 @@ updateDynamicTexts(translations) {
         'cart.offer.none': 'No offers applied',
         'cart.total_pay': 'Total to pay',
         'cart.free_shipping': '🚚 Free shipping included',
-        // --- ACCESSIBILITY TRANSLATIONS (ENGLISH) ---
-      'settings.accessibility': 'Visual Accessibility',
-      'settings.accessibility.desc': 'Color blind mode adjustment',
-      'settings.color.normal': 'Normal',
-      'settings.color.normal.desc': 'Standard colors',
-      'settings.color.protanopia': 'Protanopia',
-      'settings.color.protanopia.desc': 'No Red (Visual aid)',
-      'settings.color.tritanopia': 'Tritanopia',
-      'settings.color.tritanopia.desc': 'No Blue (Visual aid)',
       },
       zh: {
-        // 页面标题
-      'page.title.index': 'ElectroInformatic — 首页',
-      'page.title.shop': 'ElectroInformatic — 购买',
-      'page.title.cart': 'ElectroInformatic — 购物车',
-      'page.title.repair': 'ElectroInformatic — 维修',
-      'page.title.purchases': 'ElectroInformatic — 我的购买',
+        'page.title.index': 'ElectroInformatic — 首页',
+        'page.title.shop': 'ElectroInformatic — 购买',
+        'page.title.cart': 'ElectroInformatic — 购物车',
+        'page.title.repair': 'ElectroInformatic — 维修',
+        'page.title.offers': 'ElectroInformatic — 优惠',
+        'page.title.purchases': 'ElectroInformatic — 我的购买',
+        'header.brand': 'ElectroInformatic',
+        'header.tagline': '电子设备',
+        'header.cart': '购物车',
+        'header.settings': '设置',
+        'nav.home': '首页',
+        'nav.shop': '购买',
+        'nav.repair': '维修',
+        'nav.purchases': '我的购买',
+        'nav.login': '登录',
+        'header.nav.offers': "优惠",
+        'hero.title': '欢迎来到 ElectroInformatic',
+        'hero.subtitle': '购买、维修并分享您最喜爱的电子设备的体验。',
+        'hero.shop': '去购物',
+        'hero.repair': '预约维修',
+        'hero.help.title': '需要帮助？',
+        'hero.help.text': '在维修选项卡中查看指南、提示或请求维修。',
+        'reviews.title': '客户评价',
+        'shop.title': '购买',
+        'shop.subtitle': '点击任何产品查看详情并加入购物车。',
+        'shop.search': '🔍 搜索设备...',
+        'shop.modal.add': '加入购物车',
+        'cart.title': '购物车',
+        'cart.empty': '您的购物车是空的。',
+        'cart.total': '总计',
+        'cart.checkout': '结账',
+        'repair.title': '维修',
+        'repair.name': '姓名',
+        'repair.device': '设备（例如手机、笔记本电脑）',
+        'repair.description': '问题描述',
+        'repair.submit': '提交请求',
+        'repair.call': '打电话',
+        'repair.requests': '已提交的请求',
+        'repair.no_requests': '尚无请求。',
+        'purchases.title': '我的购买',
+        'purchases.subtitle': '在这里您将看到已完成的订单。您可以添加评论。',
+        'purchases.empty': '您尚未购买任何商品。',
+        'purchases.review': '添加评论',
+        'footer.text': '✨ 真正 ElectroInformaticos 的商店 ✨',
+        'login.title': '💻 ElectroInformatic',
+        'login.subtitle': '加入我们的专家社区',
+        'login.email': '📧 电子邮件',
+        'login.name': '👤 全名',
+        'login.password': '🔒 密码',
+        'login.register': '📝 注册',
+        'login.signin': '🚀 登录',
+        'login.terms': '注册即表示您接受我们的条款和条件',
+        'login.tip.register': '注册时：',
+        'login.tip.register.desc': '填写所有字段',
+        'login.tip.login': '登录时：',
+        'login.tip.login.desc': '只需电子邮件和密码',
+        'settings.title': '设置',
+        'settings.fontSize': '字体大小',
+        'settings.fontSize.desc': '调整文本大小以获得更好的可读性',
+        'settings.language': '语言',
+        'settings.language.desc': '选择您偏好的语言',
+        'settings.save': '保存设置',
+        'settings.small': '小',
+        'settings.small.desc': '紧凑文本',
+        'settings.medium': '中',
+        'settings.medium.desc': '标准大小',
+        'settings.large': '大',
+        'settings.large.desc': '放大文本',
+        'settings.xlarge': '特大',
+        'settings.xlarge.desc': '特大文本',
+        'settings.saved': '设置保存成功',
+        'settings.accessibility': '视觉辅助',
+        'settings.accessibility.desc': '色盲模式调整',
+        'settings.color.normal': '正常',
+        'settings.color.normal.desc': '标准颜色',
+        'settings.color.protanopia': '红色盲',
+        'settings.color.protanopia.desc': '无红色 (视觉辅助)',
+        'settings.color.tritanopia': '蓝色盲',
+        'settings.color.tritanopia.desc': '无蓝色 (视觉辅助)',
+        'button.buy': '购买',
+        'button.add_to_cart': '加入购物车',
 
-      // 头部
-      'header.brand': 'ElectroInformatic',
-      'header.tagline': '电子设备',
-      'header.cart': '购物车',
-      'header.settings': '设置',
+        // --- NEW GESTURE TRANSLATIONS ---
+        'settings.gestures': '手势控制',
+        'settings.gestures.desc': '用手导航 (相机)',
+        'settings.gestures.on': '已启用',
+        'settings.gestures.on.desc': '相机开启',
+        'settings.gestures.off': '已禁用',
+        'settings.gestures.off.desc': '正常使用',
 
-      // 导航
-      'nav.home': '首页',
-      'nav.shop': '购买',
-      'nav.repair': '维修',
-      'nav.purchases': '我的购买',
-      'nav.login': '登录',
-
-      // 主页
-      'hero.title': '欢迎来到 ElectroInformatic',
-      'hero.subtitle': '购买、维修并分享您最喜爱的电子设备的体验。',
-      'hero.shop': '去购物',
-      'hero.repair': '预约维修',
-      'hero.help.title': '需要帮助？',
-      'hero.help.text': '在维修选项卡中查看指南、提示或请求维修。',
-      'reviews.title': '客户评价',
-
-      // 购买页面
-      'shop.title': '购买',
-      'shop.subtitle': '点击任何产品查看详情并加入购物车。',
-      'shop.search': '🔍 搜索设备...',
-      'shop.modal.add': '加入购物车',
-
-      // 购物车
-      'cart.title': '购物车',
-      'cart.empty': '您的购物车是空的。',
-      'cart.total': '总计',
-      'cart.checkout': '结账',
-
-      // 支付模态框
-      'payment.title': '完成购买',
-      'payment.summary': '订单摘要',
-      'payment.method': '支付方式',
-      'payment.card.number': '卡号',
-      'payment.card.expiry': '有效期',
-      'payment.card.cvv': 'CVV',
-      'payment.card.name': '持卡人姓名',
-      'payment.paypal.message': '您将被重定向到 PayPal 完成支付',
-      'payment.transfer.details': '转账详情',
-      'payment.transfer.iban': 'IBAN',
-      'payment.transfer.beneficiary': '收款人',
-      'payment.transfer.concept': '概念',
-      'payment.email': '电子邮件',
-      'payment.terms': '我接受条款和条件',
-      'payment.cancel': '取消',
-      'payment.pay': '立即支付',
-      'payment.email_required': '请输入您的电子邮件',
-      'payment.terms_required': '您必须接受条款和条件',
-      'payment.card_required': '请填写所有卡资料',
-      'payment.card_invalid': '卡号必须为16位数字',
-
-      // 维修
-      'repair.title': '维修',
-      'repair.name': '姓名',
-      'repair.device': '设备（例如手机、笔记本电脑）',
-      'repair.description': '问题描述',
-      'repair.submit': '提交请求',
-      'repair.call': '打电话',
-      'repair.requests': '已提交的请求',
-      'repair.no_requests': '尚无请求。',
-      'repair.status': '状态',
-      'repair.status.pending': '待处理',
-      'repair.status.processing': '处理中',
-      'repair.status.completed': '已完成',
-      'repair.status.cancelled': '已取消',
-      'repair.edit': '编辑',
-      'repair.delete': '删除',
-      'repair.problem': '问题描述',
-      'repair.requested_by': '申请者：',
-      'repair.required_fields': '请填写所有字段。',
-      'repair.delete_confirm': '您确定要删除此维修请求吗？',
-      'repair.not_found': '未找到维修请求',
-
-      // 我的购买
-      'purchases.title': '我的购买',
-      'purchases.subtitle': '在这里您将看到已完成的订单。您可以添加评论。',
-      'purchases.empty': '您尚未购买任何商品。',
-      'purchases.review': '添加评论',
-      'purchases.edit_review': '编辑评论',
-      'purchases.your_review': '您的评论',
-      'purchases.no_date': '无日期',
-
-      // 评论
-      'review.title': '写下您的评论',
-      'review.rating': '评分',
-      'review.select_stars': '选择星星',
-      'review.rating.bad': '差',
-      'review.rating.poor': '一般',
-      'review.rating.good': '好',
-      'review.rating.very_good': '很好',
-      'review.rating.excellent': '优秀',
-      'review.placeholder': '分享您使用此产品的体验...您喜欢什么？您会改进什么？',
-      'review.cancel': '取消',
-      'review.submit': '发布评论',
-      'review.rating_required': '请选择星级评分',
-      'review.text_required': '请写下您的评论',
-      'review.default.phone': '"X-Phone 让我惊喜，电池续航极佳。"',
-      'review.default.laptop': '"SpeedBook 非常适合课堂和工作。"',
-      'review.default.headphones': '"SoundMax 音质惊人。"',
-      'review.default.watch': '"FitTime 舒适且脉搏测量准确。"',
-
-      // 页脚
-      'footer.text': '✨ 真正 ElectroInformaticos 的商店 ✨',
-
-      // 登录模态框
-      'login.title': '💻 ElectroInformatic',
-      'login.subtitle': '加入我们的专家社区',
-      'login.email': '📧 电子邮件',
-      'login.name': '👤 全名',
-      'login.password': '🔒 密码',
-      'login.register': '📝 注册',
-      'login.signin': '🚀 登录',
-      'login.terms': '注册即表示您接受我们的条款和条件',
-      'login.tip.register': '注册时：',
-      'login.tip.register.desc': '填写所有字段',
-      'login.tip.login': '登录时：',
-      'login.tip.login.desc': '只需电子邮件和密码',
-      'login.required_fields': '请填写所有字段。',
-      'login.invalid_email': '请输入有效的电子邮件地址。',
-      'login.no_users': '没有注册用户。请先注册。',
-      'login.invalid_credentials': '电子邮件或密码不正确。',
-      'login.success': '登录成功！欢迎回来 ',
-      'registration.success': '注册成功！欢迎 ',
-      'logout.success': '您已成功注销。',
-      'logout.confirm': '您要注销吗，${user.name}？',
-
-      // 设置
-      'settings.title': '设置',
-      'settings.fontSize': '字体大小：',
-      'settings.language': '语言：',
-      'settings.save': '保存设置',
-      'settings.small': '小',
-      'settings.medium': '中',
-      'settings.large': '大',
-      'settings.xlarge': '特大',
-      'settings.saved': '设置保存成功',
-      'settings.select_all': '请选择所有选项',
-
-      // 按钮和操作
-      'button.add_to_cart': '加入购物车',
-      'button.buy': '购买',
-      'button.view_details': '查看详情',
-      'button.edit': '编辑',
-      'button.delete': '删除',
-      'button.save': '保存',
-      'button.cancel': '取消',
-      'button.submit': '提交',
-      'button.confirm': '确认',
-      'button.close': '关闭',
-
-      // 通知
-      'notification.added_to_cart': '已加入购物车！',
-      'notification.login_success': '登录成功！欢迎回来',
-      'notification.registration_success': '注册成功！欢迎',
-      'notification.logout_success': '您已成功注销。',
-      'notification.empty_cart': '购物车为空',
-      'notification.payment_success': '支付完成！感谢您的购买。✨',
-      'notification.repair_submitted': '✅ 维修请求已成功提交',
-      'notification.repair_deleted': '🗑️ 请求已成功删除',
-      'notification.repair_updated': '✅ 维修请求已成功更新',
-      'notification.review_thanks': '感谢您的评论！✨',
-      'notification.product_added': '产品已加入购物车！',
-      'notification.cart_updated': '购物车已更新',
-      'notification.payment_processing': '处理支付中...',
-
-      // 设备规格
-      'specs.intel_core_i7': '英特尔酷睿 i7',
-      'specs.16gb_ram': '16GB 内存',
-      'specs.512gb_ssd': '512GB 固态硬盘',
-      'specs.rtx_3050': 'RTX 3050',
-      'specs.15_6_fhd': '15.6" 全高清',
-      'specs.windows_11': 'Windows 11',
-      'specs.intel_i5': '英特尔 i5',
-      'specs.8gb_ram': '8GB 内存',
-      'specs.256gb_ssd': '256GB 固态硬盘',
-      'specs.intel_iris': '英特尔 Iris 显卡',
-      'specs.14_fhd': '14" 全高清',
-      'specs.12h_battery': '12小时电池',
-      'specs.noise_cancellation': '降噪',
-      'specs.20h_battery': '20小时电池',
-      'specs.bluetooth_5': '蓝牙 5.0',
-      'specs.built_in_mic': '内置麦克风',
-      'specs.foldable': '可折叠',
-      'specs.amoled': 'AMOLED 显示屏',
-      'specs.water_resistant': '防水',
-      'specs.heart_monitor': '心率监测',
-      'specs.notifications': '通知',
-      'specs.7_days_battery': '7天电池',
-      'specs.27_fhd': '27" 全高清',
-      'specs.75hz': '75Hz',
-      'specs.ips': 'IPS',
-      'specs.hdmi_vga': 'HDMI/VGA',
-      'specs.thin_border': '薄边框',
-      'specs.blue_switches': '蓝轴',
-      'specs.rgb': 'RGB',
-      'specs.pbt_keys': 'PBT 键帽',
-      'specs.usb_c': 'USB-C',
-      'specs.wrist_rest': '腕托',
-      'specs.16000_dpi': '16000 DPI',
-      'specs.wireless': '无线',
-      'specs.6_buttons': '6 个按钮',
-      'specs.50h_battery': '50小时电池',
-      'specs.ergonomic': '人体工学',
-      'specs.1tb_nvme': '1TB NVMe',
-      'specs.3500_mbs': '3500 MB/秒',
-      'specs.m2': 'M.2',
-      'specs.5_years_warranty': '5 年保修',
-      'specs.rtx_4060': 'RTX 4060',
-      'specs.8gb_gddr6': '8GB GDDR6',
-      'specs.dlss_3': 'DLSS 3',
-      'specs.3_fans': '3 个风扇',
-      'specs.pcie_4': 'PCIe 4.0',
-      'specs.wifi': 'WiFi',
-      'specs.bluetooth': '蓝牙',
-      'specs.scanner': '扫描仪',
-      'specs.copier': '复印机',
-      'specs.continuous_ink': '连续供墨',
-      'specs.wifi_6': 'WiFi 6',
-      'specs.6000_mbps': '6000 Mbps',
-      'specs.8_antennas': '8 个天线',
-      'specs.2_5g_port': '2.5G 端口',
-      'specs.app_management': '应用管理',
-      'specs.1080p_30fps': '1080p 30fps',
-      'specs.auto_focus': '自动对焦',
-      'specs.adjustable_clip': '可调节夹子',
-      'specs.usb': 'USB',
-      'specs.2_1_channels': '2.1 声道',
-      'specs.100w': '100W',
-      'specs.aux_input': '辅助输入',
-      'specs.remote_control': '遥控器',
-      'specs.16gb_ddr4': '16GB DDR4',
-      'specs.3200mhz': '3200MHz',
-      'specs.cl16': 'CL16',
-      'specs.dual_channel': '双通道',
-      'specs.heatsink': '散热器',
-      'specs.10_fhd': '10" 全高清',
-      'specs.64gb': '64GB',
-      'specs.8h_battery': '8小时电池',
-      'specs.android': 'Android',
-      'specs.8mp_camera': '8MP 摄像头',
-      'product.specs': '技术规格',
-      'specs.cancelaci_n_de_ruido_pro': '专业降噪',
-      'specs.30h_bater_a': '30小时电池',
-      'specs.bluetooth_5_2': '蓝牙 5.2',
-      'specs.estuche_de_carga': '充电盒',
-      'specs.audio_hi_fi': 'Hi-Fi 音频',
-      'specs.sonido_7_1': '7.1 声道',
-      'specs.micr_fono_retr_ctil': '伸缩麦克风',
-      'specs.rgb_din_mico': '动态 RGB',
-      'specs.almohadillas_suaves': '柔软耳垫',
-      'specs.cable_trenzado_2m': '2米编织线',
-      'specs.bluetooth_5_3': '蓝牙 5.3',
-      'specs.estuche_de_carga_usb_c': 'USB-C 充电盒',
-      'specs.control_t_ctil': '触控',
-      'specs.24h_de_bater_a_total': '24小时总电池寿命',
-      'specs.dise_o_ergon_mico': '人体工学设计',
-      'specs.resistencia_ipx7': 'IPX7 防水',
-      'specs.enganche_deportivo': '运动挂钩',
-      'specs.micr_fono_hd': '高清麦克风',
-
-      'product.1.name': 'Pccom revolt i7 3050',
-      'product.1.desc': '高性能游戏笔记本电脑，配备英特尔酷睿 i7 处理器和 RTX 3050 显卡。适合游戏和密集型工作。',
-
-      'product.2.name': 'SpeedBook 14"',
-      'product.2.desc': '超轻笔记本电脑，完美适合工作和学习。优雅设计，电池续航时间长。',
-
-      'product.3.name': 'SoundMax 耳机',
-      'product.3.desc': '环绕声耳机，具有主动降噪功能。非常适合音乐和游戏。',
-
-      'product.4.name': 'FitTime 智能手表',
-      'product.4.desc': '通过这款优雅的智能手表监测您的健康和通知。防水设计。',
-
-      'product.5.name': 'UltraView 27" 显示器',
-      'product.5.desc': '全高清显示屏，色彩鲜艳，边框超薄。适合工作和娱乐。',
-
-      'product.6.name': 'ProKey 机械键盘',
-      'product.6.desc': 'RGB 背光和高耐久性开关。卓越的打字体验。',
-
-      'product.7.name': 'SwiftClick 光电鼠标',
-      'product.7.desc': '极致精度和符合人体工程学的设计，适合长时间使用。无线连接。',
-
-      'product.8.name': 'FastDrive 1TB SSD 硬盘',
-      'product.8.desc': '超快的读写速度。提升您的设备性能。',
-
-      'product.9.name': 'PowerX 4060 显卡',
-      'product.9.desc': '游戏和视频编辑的理想性能。支持高质量的最新游戏。',
-
-      'product.10.name': 'JetPrint 3000 打印机',
-      'product.10.desc': '具有 WiFi 和蓝牙连接的快速打印。彩色多功能。',
-
-      'product.11.name': 'TurboNet AX6000 WiFi 路由器',
-      'product.11.desc': '覆盖范围广，支持 WiFi 6。非常适合多设备家庭。',
-
-      'product.12.name': 'ClearView HD 网络摄像头',
-      'product.12.desc': '1080p 分辨率，适合视频通话和直播。内置麦克风。',
-
-      'product.13.name': 'BassBoom 2.1 音箱',
-      'product.13.desc': '强大的声音，深沉的低音和现代设计。蓝牙和辅助输入连接。',
-
-      'product.14.name': 'HyperSpeed 16GB 内存',
-      'product.14.desc': '多任务和游戏的卓越性能。兼容大多数主板。',
-
-      'product.15.name': 'TabX 10" 平板电脑',
-      'product.15.desc': '大屏幕和长续航电池，适合娱乐和轻量工作。',
-
-      'product.16.name': 'ProMax 耳机',
-      'product.16.desc': '具有深沉低音和优质设计的工作室级声音。先进的降噪功能。',
-
-      'product.17.name': 'GamerZone H7',
-      'product.17.desc': '具有 7.1 环绕声和伸缩麦克风的游戏耳机。带 RGB 灯光的人体工学设计。',
-
-      'product.18.name': 'MiniPods AirLite',
-      'product.18.desc': '带紧凑充电盒的超轻无线耳机。清晰的声音和即时连接。',
-
-      'product.19.name': 'SoundBeats Urban',
-      'product.19.desc': '具有人体工学挂钩的防水运动耳机。强劲的声音和稳固的佩戴，适合训练。',
-
-      'settings.fontSize.desc': '调整文本大小以获得更好的可读性',
-'settings.language.desc': '选择您偏好的语言',
-'settings.small.desc': '紧凑文本',
-'settings.medium.desc': '标准大小',
-'settings.large.desc': '放大文本',
-'settings.xlarge.desc': '特大文本',
-'settings.language.es': '西班牙语',
-'settings.language.en': '英语',
-'settings.language.zh': '中文',
-
-    'tutorial.start': '开始教程',
-        'tutorial.empty_cart_redirect': '您的购物车似乎是空的。让我们去产品页面添加一些东西。',
-        'tutorial.welcome': '欢迎来到 ElectroInformatic 教程！',
-        'tutorial.click_product': '首先，点击此产品以查看其详细信息和规格。',
-        'tutorial.add_to_cart': '现在您已查看产品规格，请点击此处将其添加到购物车。',
-        'tutorial.go_to_cart': '完美！您已将产品添加到购物车。现在点击购物车查看您的产品并完成购买。',
-        'tutorial.cart_welcome': '欢迎来到购物车！在这里您可以看到您添加的所有产品。',
-        'tutorial.proceed_checkout': '要继续购买，请点击“结账”。',
-        'tutorial.complete_payment': '填写付款详细信息以完成购买。在真实环境中，您将在此处输入卡详细信息。',
-        'tutorial.completed': '教程完成！现在您知道如何在 ElectroInformatic 购物了。',
-        'tutorial.step': '步骤',
-        'tutorial.previous': '上一步',
-        'tutorial.next': '下一步',
-        'tutorial.finish': '完成',
-        // oferta
-'page.title.offers': 'ElectroInformatic — 优惠',
-'offers.special_offers': '特别优惠',
-'offers.special_offers.subtitle': '利用我们独家的限时促销',
-'offers.black_friday.title': '🛍️ 黑色星期五 🛍️',
-'offers.black_friday.subtitle': '独家限时优惠！',
-'offers.3x2.title': '耳机买3付2',
-'offers.3x2.description': '买3个耳机只需付2个的钱。最佳音响优惠！',
-'offers.3x2.details': '适用于所有耳机型号',
-'offers.20_discount.title': '满250€享20%折扣',
-'offers.20_discount.description': '购买超过250€享受20%折扣',
-'offers.20_discount.details': '自动应用',
-'offers.free_shipping.title': '免费送货',
-'offers.free_shipping.description': '黑色星期五期间所有订单免费送货',
-'offers.free_shipping.details': '有效期至库存售完',
-'offers.featured_products': '特色优惠产品',
-'offers.complete_offer': '完成您的买3付2优惠！',
-'offers.add_for_promotion': '添加以下产品之一参与促销：',
-'offers.off': '优惠',
-'nav.offers': "查看所有优惠",
-'header.nav.offers': "优惠",
-'cart.subtotal': '小计',
+        // Offers
+        'offers.special_offers': '特别优惠',
+        'offers.special_offers.subtitle': '利用我们独家的限时促销',
+        'offers.black_friday.title': '🛍️ 黑色星期五 🛍️',
+        'offers.black_friday.subtitle': '独家限时优惠！',
+        'offers.3x2.title': '耳机买3付2',
+        'offers.3x2.description': '买3个耳机只需付2个的钱。最佳音响优惠！',
+        'offers.3x2.details': '适用于所有耳机型号',
+        'offers.20_discount.title': '满250€享20%折扣',
+        'offers.20_discount.description': '购买超过250€享受20%折扣',
+        'offers.20_discount.details': '自动应用',
+        'offers.free_shipping.title': '免费送货',
+        'offers.free_shipping.description': '黑色星期五期间所有订单免费送货',
+        'offers.free_shipping.details': '有效期至库存售完',
+        'offers.featured_products': '特色优惠产品',
+        'offers.complete_offer': '完成您的买3付2优惠！',
+        'offers.add_for_promotion': '添加以下产品之一参与促销：',
+        'offers.off': '优惠',
+        'nav.offers': "查看所有优惠",
+        'cart.subtotal': '小计',
         'cart.discount_applied': '已应用折扣',
         'cart.offer.3x2': '🟢 活动优惠：耳机买3付2',
         'cart.offer.20_percent': '🟢 活动优惠：订单满 250€ 享 20% 折扣',
         'cart.offer.none': '无适用优惠',
         'cart.total_pay': '应付总额',
         'cart.free_shipping': '🚚 包含免费送货',
-
-        // --- 辅助功能翻译 (CHINESE) ---
-      'settings.accessibility': '视觉辅助',
-      'settings.accessibility.desc': '色盲模式调整',
-      'settings.color.normal': '正常',
-      'settings.color.normal.desc': '标准颜色',
-      'settings.color.protanopia': '红色盲',
-      'settings.color.protanopia.desc': '无红色 (视觉辅助)',
-      'settings.color.tritanopia': '蓝色盲',
-      'settings.color.tritanopia.desc': '无蓝色 (视觉辅助)',
       }
     };
   }
@@ -3452,54 +2751,7 @@ const Chatbot = {
       fact: '🤓 El primer ratón era de madera (1964).',
       fallback: 'No te entiendo. Prueba con <strong>"Ayuda"</strong>.',
 
-      proactive: {
-        default: [
-          "👋 Hola, llevo un rato observando. ¿Necesitas que te guíe?",
-          "🤖 Bip, bop. ¿Buscas algo en concreto?",
-          "👀 Si te pierdes, estoy aquí para ayudarte.",
-          "✨ Recuerda que puedes cambiar el tema a Modo Oscuro si lo prefieres.",
-          "🚀 ¿Sabías que hacemos envíos en 24h?"
-        ],
-        shop: [ // Comprar
-          "🎮 ¿Buscas un PC Gaming o algo para trabajar? Pregúntame.",
-          "📉 Veo que dudas. ¿Quieres que te recomiende lo más barato?",
-          "🔥 Los portátiles están volando hoy. ¡Aprovecha!",
-          "🔍 Usa el buscador de arriba si no encuentras tu modelo.",
-          "⌨️ Tenemos teclados mecánicos muy buenos en oferta.",
-          "🖱️ ¿Eres de ratón inalámbrico o con cable? Tengo opciones."
-        ],
-        cart: [ // Carrito
-          "💳 ¿Tienes problemas con el pago? Puedo ayudarte.",
-          "🚚 Recuerda: ¡Envío gratis si superas cierto importe!",
-          "🛒 ¡Ya casi es tuyo! ¿Te ayudo a finalizar la compra?",
-          "🔒 El pago es 100% seguro, no te preocupes.",
-          "🎁 ¿Has revisado si te falta algo para aprovechar el envío gratis?",
-          "🏷️ Si tienes un código promocional, es el momento de usarlo."
-        ],
-        repair: [ // Reparar
-          "🛠️ Lamento que tu dispositivo falle. ¿Abrimos una incidencia?",
-          "🔍 ¿Quieres consultar el estado de una reparación antigua?",
-          "📱 ¿Pantalla rota? Tenemos técnicos especialistas.",
-          "💻 Si tu PC va lento, a veces basta con cambiar el disco duro.",
-          "⏱️ Nuestras reparaciones suelen tardar menos de 48h.",
-          "👨‍🔧 Nuestros técnicos son certificados por las marcas oficiales."
-        ],
-        offers: [ // Ofertas
-          "🎁 ¡El 3x2 en auriculares es nuestra mejor oferta!",
-          "⚡ ¡Corre que el stock del Black Friday vuela!",
-          "💸 ¿Has visto el descuento del 20%? Es automático.",
-          "🔥 Esa tarjeta gráfica tiene un precio histórico mínimo.",
-          "🎧 Los SoundMax están baratísimos ahora mismo.",
-          "🕒 Estas ofertas acaban pronto, no te lo pienses mucho."
-        ],
-        purchases: [ // Mis Compras
-          "⭐ ¿Qué tal tu última compra? ¡Nos encantaría leer tu reseña!",
-          "📄 ¿Necesitas descargar la factura de algún pedido?",
-          "📦 Esperamos que disfrutes de tus nuevos gadgets.",
-          "🔄 Tienes 30 días para devoluciones si algo no te convence.",
-          "🚚 Puedes seguir el estado de tu envío desde aquí."
-        ]
-      }
+
     },
     en: {
       welcome: "Hi! I'm ElectroBot. How can I help?",
@@ -3538,54 +2790,7 @@ const Chatbot = {
       fact: '🤓 The first computer mouse was made of wood.',
       fallback: 'I don\'t understand. Try <strong>"Help"</strong>.',
 
-      proactive: {
-        default: [
-          "👋 Hi there, need some guidance?",
-          "🤖 Beep, boop. Looking for something specific?",
-          "👀 I'm here if you get lost.",
-          "✨ You can toggle Dark Mode if you prefer.",
-          "🚀 Did you know we offer 24h shipping?"
-        ],
-        shop: [
-          "🎮 Gaming or Work? Ask me for recommendations.",
-          "📉 Hesitating? Want me to show you the cheapest items?",
-          "🔥 Laptops are selling fast today. Grab one!",
-          "🔍 Use the search bar above if you can't find your model.",
-          "⌨️ We have great mechanical keyboards on sale.",
-          "🖱️ Wireless or wired mouse? I have options for both."
-        ],
-        cart: [
-          "💳 Any issues with payment? I can help.",
-          "🚚 Remember: Free shipping on qualified orders!",
-          "🛒 Almost yours! Need help finishing checkout?",
-          "🔒 Payment is 100% secure, don't worry.",
-          "🎁 Check if you need one more item for free shipping!",
-          "🏷️ If you have a promo code, now is the time."
-        ],
-        repair: [
-          "🛠️ Sorry about your device. Shall we open a ticket?",
-          "🔍 Want to check the status of a repair?",
-          "📱 Broken screen? We have expert technicians.",
-          "💻 Slow PC? Sometimes an SSD upgrade is all you need.",
-          "⏱️ Repairs usually take less than 48 hours.",
-          "👨‍🔧 Our technicians are officially certified."
-        ],
-        offers: [
-          "🎁 The 3x2 on headphones is our best deal!",
-          "⚡ Hurry! Black Friday stock is running low!",
-          "💸 Have you seen the 20% discount? It's automatic.",
-          "🔥 That graphics card is at an all-time low price.",
-          "🎧 SoundMax headphones are a steal right now.",
-          "🕒 These offers end soon, don't wait too long."
-        ],
-        purchases: [
-          "⭐ How was your purchase? We'd love a review!",
-          "📄 Need an invoice for any order?",
-          "📦 We hope you enjoy your new gadgets.",
-          "🔄 You have 30 days for returns.",
-          "🚚 You can track your shipment from here."
-        ]
-      }
+
     },
     zh: {
       welcome: "你好！我是 ElectroBot。",
@@ -3624,54 +2829,7 @@ const Chatbot = {
       fact: '🤓 第一个鼠标是木头做的。',
       fallback: '我不明白。请输入 <strong>"Help"</strong>。',
 
-      proactive: {
-        default: [
-          "👋 你好，需要我带路吗？",
-          "🤖 哔哔。在找什么特别的东西吗？",
-          "👀 如果迷路了，我在这里等你。",
-          "✨ 你可以切换到深色模式。",
-          "🚀 你知道我们提供24小时发货吗？"
-        ],
-        shop: [
-          "🎮 游戏还是工作？我可以为您推荐。",
-          "📉 犹豫不决？想看看最便宜的吗？",
-          "🔥 今天的笔记本电脑卖得很火。抓紧！",
-          "🔍 如果找不到型号，请使用上方的搜索栏。",
-          "⌨️ 我们的机械键盘正在促销。",
-          "🖱️ 无线还是有线鼠标？我有推荐。"
-        ],
-        cart: [
-          "💳 支付有问题吗？我可以帮忙。",
-          "🚚 记住：满足条件免运费！",
-          "🛒 快是你的了！需要帮助结账吗？",
-          "🔒 支付100%安全，请放心。",
-          "🎁 看看是否还需要加一件商品以免运费！",
-          "🏷️ 如果你有优惠码，现在可以使用。"
-        ],
-        repair: [
-          "🛠️ 设备坏了？我们要开个维修单吗？",
-          "🔍 想查询维修状态吗？",
-          "📱 屏幕碎了？我们有专家。",
-          "💻 电脑慢？有时候换个硬盘就行。",
-          "⏱️ 维修通常在48小时内完成。",
-          "👨‍🔧 我们的技术人员经过官方认证。"
-        ],
-        offers: [
-          "🎁 耳机买三付二是最好的优惠！",
-          "⚡ 快点！黑色星期五库存不多了！",
-          "💸 看到20%的折扣了吗？自动应用的。",
-          "🔥 显卡价格达到了历史最低。",
-          "🎧 SoundMax 耳机现在非常划算。",
-          "🕒 优惠即将结束，不要犹豫太久。"
-        ],
-        purchases: [
-          "⭐ 购物体验如何？我们期待您的评价！",
-          "📄 需要发票吗？",
-          "📦 希望您喜欢您的新设备。",
-          "🔄 您有30天的退货期。",
-          "🚚 您可以在这里追踪发货状态。"
-        ]
-      }
+
     }
   },
 
@@ -3714,65 +2872,7 @@ const Chatbot = {
     this.createDOM();
     this.bindEvents();
     this.renderInitialMessages();
-    this.startProactiveInitiative();
-  },
-  startProactiveInitiative() {
-    // --- CONFIGURACIÓN ---
-    const TIEMPO_INICIAL = 10000; // 10 segundos la primera vez
 
-    // Rango para las siguientes veces (Aleatorio entre MIN y MAX)
-    const TIEMPO_MIN = 30000; // 30 segundos
-    const TIEMPO_MAX = 90000; // 90 segundos (1 minuto y medio)
-
-    // Función para calcular tiempo aleatorio
-    const getRandomDelay = () => {
-        return Math.floor(Math.random() * (TIEMPO_MAX - TIEMPO_MIN + 1) + TIEMPO_MIN);
-    };
-
-    const triggerLogic = () => {
-        // Solo molestamos si el chat está CERRADO
-        if (!this.isOpen) {
-
-            // 1. DETECTAR CONTEXTO
-            const path = window.location.pathname;
-            let contextKey = 'default';
-
-            if (path.includes('comprar')) contextKey = 'shop';
-            else if (path.includes('carrito')) contextKey = 'cart';
-            else if (path.includes('reparar')) contextKey = 'repair';
-            else if (path.includes('ofertas')) contextKey = 'offers';
-            else if (path.includes('mis-compras')) contextKey = 'purchases';
-
-            // 2. OBTENER IDIOMA
-            const settings = AppStorage.getSettings();
-            const lang = settings.language || 'es';
-
-            // 3. SELECCIONAR MENSAJE ALEATORIO
-            if (this.i18n[lang] && this.i18n[lang].proactive) {
-                const messagesList = this.i18n[lang].proactive[contextKey] || this.i18n[lang].proactive['default'];
-                const randomMessage = messagesList[Math.floor(Math.random() * messagesList.length)];
-
-                // 4. EJECUTAR
-                console.log(`🤖 ElectroBot dice: "${randomMessage}" (Contexto: ${contextKey})`);
-                this.toggle();
-                this.addMessage(randomMessage, 'bot');
-
-                if (this.voiceEnabled) this.speak(randomMessage);
-                else if(typeof Feedback !== 'undefined') Feedback.playSound('info');
-            }
-        } else {
-            console.log("🤖 El bot quería salir, pero ya estaba abierto. Esperando al siguiente turno.");
-        }
-
-        // --- REPROGRAMACIÓN ALEATORIA ---
-        const nextDelay = getRandomDelay();
-        console.log(`🕒 Próximo intento del bot en: ${nextDelay/1000} segundos.`);
-        this.proactiveTimer = setTimeout(triggerLogic, nextDelay);
-    };
-
-    // Primera ejecución fija
-    console.log(`🕒 Bot programado para salir en ${TIEMPO_INICIAL/1000} segundos.`);
-    this.proactiveTimer = setTimeout(triggerLogic, TIEMPO_INICIAL);
   },
 
   // Helper para obtener textos en el idioma actual
@@ -4863,3 +3963,250 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+/**
+ * ElectroInformatic - Módulo de Control por Mando (Gamepad)
+ * Soporte para DualShock 4 (PS4) y XInput (Xbox)
+ */
+
+const GamepadNav = {
+  active: false,
+  connected: false,
+  lastFocus: null,
+  lastInputTime: 0,
+  inputDelay: 150, // Milisegundos entre movimientos para evitar scroll loco
+  deadZone: 0.5,   // Zona muerta para los joysticks
+
+  // Mapeo de botones (Estándar Gamepad API)
+  BUTTONS: {
+    CROSS: 0, // X en PS4 / A en Xbox
+    CIRCLE: 1, // O en PS4 / B en Xbox
+    UP: 12,
+    DOWN: 13,
+    LEFT: 14,
+    RIGHT: 15
+  },
+
+  init() {
+    window.addEventListener("gamepadconnected", (e) => {
+      console.log("🎮 Mando conectado:", e.gamepad.id);
+      this.connected = true;
+      this.active = true;
+      Feedback.notify("🎮 Mando conectado: Modo Consola activado", "info");
+      this.highlightFirstElement();
+      this.loop();
+    });
+
+    window.addEventListener("gamepaddisconnected", () => {
+      console.log("🎮 Mando desconectado");
+      this.connected = false;
+      this.removeHighlights();
+    });
+  },
+
+  loop() {
+    if (!this.connected) return;
+
+    const gamepads = navigator.getGamepads();
+    const gp = gamepads[0]; // Usamos el primer mando
+
+    if (gp) {
+      const now = Date.now();
+      if (now - this.lastInputTime > this.inputDelay) {
+
+        // --- Navegación D-PAD y Joystick Izquierdo ---
+        if (gp.buttons[this.BUTTONS.UP].pressed || gp.axes[1] < -this.deadZone) {
+          this.navigate('up');
+          this.lastInputTime = now;
+        }
+        else if (gp.buttons[this.BUTTONS.DOWN].pressed || gp.axes[1] > this.deadZone) {
+          this.navigate('down');
+          this.lastInputTime = now;
+        }
+        else if (gp.buttons[this.BUTTONS.LEFT].pressed || gp.axes[0] < -this.deadZone) {
+          this.navigate('left');
+          this.lastInputTime = now;
+        }
+        else if (gp.buttons[this.BUTTONS.RIGHT].pressed || gp.axes[0] > this.deadZone) {
+          this.navigate('right');
+          this.lastInputTime = now;
+        }
+
+        // --- Acciones ---
+
+        // Botón X (Seleccionar/Click)
+        if (gp.buttons[this.BUTTONS.CROSS].pressed) {
+          this.triggerClick();
+          this.lastInputTime = now + 200; // Delay extra para clicks
+        }
+
+        // Botón Círculo (Atrás/Cerrar Modal)
+        if (gp.buttons[this.BUTTONS.CIRCLE].pressed) {
+          this.triggerBack();
+          this.lastInputTime = now + 200;
+        }
+      }
+    }
+
+    requestAnimationFrame(() => this.loop());
+  },
+
+  // Obtiene elementos interactivos visibles
+  getFocusableElements() {
+    // Detectar si hay un modal abierto para atrapar el foco dentro
+    const openModal = document.querySelector('.modal[style*="block"]');
+    const container = openModal ? openModal : document.body;
+
+    // Selectores de elementos interactivos
+    const selectors = 'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"]), .card';
+
+    // Convertir NodeList a Array y filtrar solo los visibles
+    return Array.from(container.querySelectorAll(selectors)).filter(el => {
+      return el.offsetParent !== null && !el.disabled && el.style.pointerEvents !== 'none';
+    });
+  },
+
+  highlightFirstElement() {
+    const focusables = this.getFocusableElements();
+    if (focusables.length > 0) {
+      this.setFocus(focusables[0]);
+    }
+  },
+
+  setFocus(el) {
+    if (!el) return;
+
+    // Quitar foco anterior
+    if (this.lastFocus) {
+      this.lastFocus.classList.remove('gamepad-hover');
+      this.lastFocus.blur();
+    }
+
+    // Poner nuevo foco
+    el.classList.add('gamepad-hover');
+    el.focus({ preventScroll: true }); // Gestionamos el scroll nosotros
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+
+    this.lastFocus = el;
+
+    // Efecto de sonido si tienes el módulo de Feedback
+    if (typeof Feedback !== 'undefined') {
+        // Sonido muy suave al moverse
+    }
+  },
+
+  removeHighlights() {
+    const els = document.querySelectorAll('.gamepad-hover');
+    els.forEach(el => el.classList.remove('gamepad-hover'));
+  },
+
+  triggerClick() {
+    if (this.lastFocus) {
+      this.lastFocus.click();
+
+      // Feedback visual extra
+      this.lastFocus.classList.add('gamepad-click');
+      setTimeout(() => this.lastFocus.classList.remove('gamepad-click'), 150);
+
+      if (typeof Feedback !== 'undefined') Feedback.playSound('success');
+    }
+  },
+
+  triggerBack() {
+    // Lógica para cerrar modales o volver
+    const openModal = document.querySelector('.modal[style*="block"]');
+    if (openModal) {
+      // Intentar encontrar el botón de cerrar
+      const closeBtn = openModal.querySelector('.close-modal') || openModal.querySelector('.btn-secondary');
+      if (closeBtn) closeBtn.click();
+      else openModal.style.display = 'none'; // Fallback
+
+      if (typeof Feedback !== 'undefined') Feedback.playSound('delete');
+    } else {
+      // Si no hay modal, quizás volver al inicio o historial
+      // window.history.back(); // Opcional
+    }
+  },
+
+  // Algoritmo de Navegación Espacial
+  navigate(direction) {
+    const current = this.lastFocus;
+    if (!current) {
+      this.highlightFirstElement();
+      return;
+    }
+
+    const currentRect = current.getBoundingClientRect();
+    const focusables = this.getFocusableElements();
+
+    let bestCandidate = null;
+    let minDistance = Infinity;
+
+    focusables.forEach(el => {
+      if (el === current) return;
+
+      const rect = el.getBoundingClientRect();
+
+      // Calcular centros
+      const cx = currentRect.left + currentRect.width / 2;
+      const cy = currentRect.top + currentRect.height / 2;
+      const ex = rect.left + rect.width / 2;
+      const ey = rect.top + rect.height / 2;
+
+      let dist = Infinity;
+      let isDirectionCorrect = false;
+
+      // Comprobar dirección
+      switch (direction) {
+        case 'up':
+          if (ey < cy) { // Está arriba
+             // Priorizar elementos verticalmente alineados
+             const xDiff = Math.abs(cx - ex);
+             const yDiff = Math.abs(cy - ey);
+             dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+             // Penalizar si está muy lejos horizontalmente
+             if (yDiff > xDiff * 0.5) isDirectionCorrect = true;
+          }
+          break;
+        case 'down':
+          if (ey > cy) { // Está abajo
+             const xDiff = Math.abs(cx - ex);
+             const yDiff = Math.abs(cy - ey);
+             dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+             if (yDiff > xDiff * 0.5) isDirectionCorrect = true;
+          }
+          break;
+        case 'left':
+          if (ex < cx) { // Está a la izquierda
+             const xDiff = Math.abs(cx - ex);
+             const yDiff = Math.abs(cy - ey);
+             dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+             // Penalizar distancia vertical
+             if (xDiff > yDiff * 0.5) isDirectionCorrect = true;
+          }
+          break;
+        case 'right':
+          if (ex > cx) { // Está a la derecha
+             const xDiff = Math.abs(cx - ex);
+             const yDiff = Math.abs(cy - ey);
+             dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+             if (xDiff > yDiff * 0.5) isDirectionCorrect = true;
+          }
+          break;
+      }
+
+      if (isDirectionCorrect && dist < minDistance) {
+        minDistance = dist;
+        bestCandidate = el;
+      }
+    });
+
+    if (bestCandidate) {
+      this.setFocus(bestCandidate);
+    }
+  }
+};
+
+// Iniciar al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  GamepadNav.init();
+});

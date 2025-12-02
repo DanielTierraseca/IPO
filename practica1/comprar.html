@@ -250,6 +250,35 @@
           </div>
         </div>
       </div>
+
+      <div class="settings-section">
+        <div class="settings-header">
+          <div class="settings-icon">🖐️</div>
+          <div>
+            <h3 data-i18n="settings.gestures">Control por Gestos</h3>
+            <p class="settings-description" data-i18n="settings.gestures.desc">Navega usando las manos (Cámara)</p>
+          </div>
+        </div>
+        <div class="settings-options-grid">
+          <div class="settings-option-card" data-gestures="off">
+            <div class="option-icon">⭕</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.gestures.off">Desactivado</div>
+              <div class="option-desc" data-i18n="settings.gestures.off.desc">Uso normal</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+
+          <div class="settings-option-card" data-gestures="on">
+            <div class="option-icon">📷</div>
+            <div class="option-content">
+              <div class="option-title" data-i18n="settings.gestures.on">Activado</div>
+              <div class="option-desc" data-i18n="settings.gestures.on.desc">Activar cámara</div>
+            </div>
+            <div class="option-check">✓</div>
+          </div>
+        </div>
+      </div>
       <!-- Botón de guardar -->
       <div class="settings-actions">
         <button class="btn btn-primary" id="save-settings" data-i18n="settings.save">
@@ -260,7 +289,23 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
+<div id="gesture-interface" class="gesture-interface" style="display: none;">
+  <div class="gesture-status" id="gesture-status">🔴 Iniciando...</div>
+  <video class="input_video" style="display: none;"></video>
+  <canvas class="output_canvas" width="320px" height="240px"></canvas>
+  <div class="gesture-legend">
+    <div>👉 Inicio</div>
+    <div>👈 Tienda</div>
+    <div>👆 Arriba</div>
+    <div>👇 Abajo</div>
+    <div>✌️ Acción</div>
+  </div>
+</div>
   <script src="script.js"></script>
 
    <!-- Script para tutoriales en carrito.html -->
