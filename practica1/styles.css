@@ -3888,3 +3888,18 @@ select.gamepad-hover {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* En styles.css */
+
+/* Clase para suavizar el retorno del botón cuando el ratón se aleja */
+.btn, .offer-btn, .small-btn {
+  /* Transición rápida para que el imán se sienta reactivo */
+  transition: transform 0.1s ease-out, background 0.3s, box-shadow 0.3s;
+  will-change: transform; /* Optimización de rendimiento */
+}
+
+/* Cuando el imán está activo (opcional, para dar feedback visual extra) */
+.magnetic-active {
+  z-index: 50; /* Que se ponga por encima de otros elementos */
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3); /* Sombra flotante */
+}

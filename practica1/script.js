@@ -2093,6 +2093,7 @@ const Repairs = {
   }
 };
 
+
 // =============================================
 // SISTEMA DE AJUSTES
 // =============================================
@@ -2294,6 +2295,7 @@ const Settings = {
       Products.render();
     }
   },
+
 
   updateAllModules(translations) {
     // Actualizar Ofertas
@@ -3183,6 +3185,7 @@ document.addEventListener('DOMContentLoaded', function() {
   Products.init();
   PaymentModal.init();
   Chatbot.init();
+  FittsLawUI.init();
 
   // Inicializar modal de pago si existe
   if (document.getElementById('payment-modal')) {
@@ -4203,6 +4206,56 @@ const GamepadNav = {
     if (bestCandidate) {
       this.setFocus(bestCandidate);
     }
+  }
+};
+
+// =============================================
+// RETO 9: LEY DE FITTS (BOTONES MAGNÉTICOS)
+// =============================================
+
+const FittsLawUI = {
+  threshold: 60,
+  strength: 0.4,
+
+  init() {
+    document.addEventListener('mousemove', (e) => {
+      requestAnimationFrame(() => this.handleMove(e));
+    });
+  },
+
+  handleMove(e) {
+    // CAMBIO IMPORTANTE: Ahora seleccionamos TODOS los botones posibles
+    // Incluye: .nav-btn (header), .cart-btn, .tutorial-btn, .close-modal, etc.
+    const buttons = document.querySelectorAll('button, .btn, .small-btn, .offer-btn, .nav-btn, .cart-btn, .tutorial-btn, .close-modal');
+
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    buttons.forEach(btn => {
+      // Ignoramos botones ocultos o deshabilitados para no gastar recursos
+      if (btn.offsetParent === null || btn.disabled) return;
+
+      const rect = btn.getBoundingClientRect();
+      const btnCenterX = rect.left + rect.width / 2;
+      const btnCenterY = rect.top + rect.height / 2;
+
+      const distance = Math.hypot(mouseX - btnCenterX, mouseY - btnCenterY);
+
+      if (distance < this.threshold) {
+        const moveX = (mouseX - btnCenterX) * this.strength;
+        const moveY = (mouseY - btnCenterY) * this.strength;
+
+        // Aplicamos la atracción
+        btn.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) scale(1.1)`;
+        btn.classList.add('magnetic-active');
+      } else {
+        // Resetear solo si estaba transformado
+        if (btn.classList.contains('magnetic-active')) {
+          btn.style.transform = '';
+          btn.classList.remove('magnetic-active');
+        }
+      }
+    });
   }
 };
 
